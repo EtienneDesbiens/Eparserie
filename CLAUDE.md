@@ -71,20 +71,43 @@ Data Models:
 
 ## Running the Bot
 
+### Option 1: OAuth 2.0 (Recommended, Secure)
+
+**One-time setup:**
+1. Create Google Cloud project: https://console.cloud.google.com/
+2. Enable Gmail API
+3. Create OAuth 2.0 credentials (Desktop app)
+4. Download JSON credentials → save as `gmail_credentials.json`
+5. First run: app opens browser for authentication
+6. Tokens saved automatically for future runs
+
+**Run:**
 ```bash
-# Setup
-cp .env.example .env  # Fill in credentials
+cp .env.example .env
 pip install -r requirements.txt
-python -m playwright install chromium
-
-# Run once
 python main.py
-
-# Check logs
-cat grocerybot.log
+# Browser opens for Gmail authorization (first run only)
 ```
 
-The bot is designed to run once per day via system scheduler (Windows Task Scheduler, cron, etc.).
+### Option 2: SMTP with App Password (Legacy, Deprecated in 2025+)
+
+Only used as fallback if OAuth not available.
+
+**Setup:**
+1. Enable 2FA on Gmail account
+2. Go to https://myaccount.google.com/apppasswords
+3. Generate app password for "Mail" on "Windows Computer"
+4. Add to `.env`: `GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx`
+
+**Note:** Google phased out this method in 2025. OAuth is required for new users.
+
+### Scheduling
+
+The bot is designed to run once per day via system scheduler:
+- **Windows:** Task Scheduler → create scheduled task → `python main.py`
+- **Linux/Mac:** Cron → `0 8 * * * cd /path && python main.py`
+
+**Logs:** Check `grocerybot.log` for execution details
 
 ## CodeGraph
 
