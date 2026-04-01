@@ -53,6 +53,7 @@ def test_fetch_flipp_deals_filters_stores():
     pub_response = MagicMock()
     pub_response.json.return_value = FAKE_PUBLICATIONS
     pub_response.raise_for_status = MagicMock()
+    pub_response.headers = {"content-type": "application/json"}
 
     items_response = MagicMock()
     items_response.json.return_value = FAKE_ITEMS
