@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Grocery Deals</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif">
+<div style="max-width:600px;margin:0 auto;background:#f4f6f9">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a7f4b 0%,#2ecc71 100%);padding:30px 28px;color:white;overflow:hidden">
+    <div style="font-size:28px;font-weight:800;letter-spacing:-0.5px">&#x1F6D2; Weekly Deals</div>
+    <div style="font-size:13px;opacity:0.9;margin-top:6px">Sherbrooke, QC &middot; {{ date }}</div>
+    <div style="margin-top:14px">
+      <span style="background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-right:6px">{{ total_stores }} stores</span>
+      <span style="background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-right:6px">{{ total_deals }} deals</span>
+      <span style="background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">{{ recipes|length }} recipes</span>
+    </div>
+  </div>
+
+  <!-- Failed stores notice -->
+  {% if failed_stores %}
+  <div style="background:#fff3cd;padding:10px 20px;font-size:12px;color:#856404;border-bottom:1px solid #ffc107">
+    &#x26A0;&#xFE0F; Deals unavailable this week: {{ failed_stores | join(', ') }}
+  </div>
+  {% endif %}
+
+  <!-- Recipes -->
+  {% if recipes %}
+  <div style="padding:22px 20px 0">
+    <div style="font-size:18px;font-weight:800;color:#1a1a1a;margin-bottom:4px">&#x1F37D;&#xFE0F; Suggested Recipes</div>
+    <div style="font-size:12px;color:#888;margin-bottom:14px">Maximizing your Maxi deals</div>
+
+    <!-- Featured recipe -->
+    {% set featured = recipes[0] %}
+    <div style="background:linear-gradient(135deg,#fff9e6,#fff3cc);border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid #f5dc80;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;background:#f5a623;color:white;font-size:10px;font-weight:700;padding:4px 10px;border-radius:0 12px 0 8px">&#x2B50; BEST PICK</div>
+      <div style="font-weight:800;font-size:15px;color:#7b4a00;margin-bottom:3px">{{ featured.name }}</div>
+      <div style="font-size:11px;color:#a06820;margin-bottom:10px">
+        {{ featured.store_count }} store{% if featured.store_count != 1 %}s{% endif %} needed &middot; {{ featured.matched_deals|length }} deal{% if featured.matched_deals|length != 1 %}s{% endif %} used
+      </div>
+      <div style="margin-bottom:12px">
+        {% for deal in featured.matched_deals %}
+        <span style="display:inline-block;background:#fff;color:#2e7d32;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #c8e6c9;font-weight:600;margin:2px">
+          {{ deal.name }} &mdash; {{ deal.store }} ${{ "%.2f"|format(deal.sale_price) }}
+        </span>
+        {% endfor %}
+      </div>
+      <a href="{{ featured.url }}" style="display:inline-block;background:#f5a623;color:white;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;text-decoration:none">View Recipe &#x2192;</a>
+    </div>
+
+    <!-- Other recipes (side by side) -->
+    {% if recipes|length > 1 %}
+    <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:6px">
+      <tr>
+        {% for recipe in recipes[1:] %}
+        <td width="50%" style="padding:0 {% if loop.first %}0 5px 0{% else %}5px 0 0{% endif %}; vertical-align:top">
+          <div style="background:white;border-radius:12px;padding:14px;border:1px solid #e8e8e8">
+            <div style="font-weight:700;font-size:13px;color:#333;margin-bottom:3px">{{ recipe.name }}</div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px">
+              {{ recipe.store_count }} store{% if recipe.store_count != 1 %}s{% endif %} &middot; {{ recipe.matched_deals|length }} deal{% if recipe.matched_deals|length != 1 %}s{% endif %}
+            </div>
+            <div style="margin-bottom:10px">
+              {% for deal in recipe.matched_deals %}
+              {% set color = store_colors[deal.store]["main"] %}
+              <span style="display:inline-block;background:#f0f0f0;color:#333;font-size:10px;padding:3px 7px;border-radius:10px;margin:2px">{{ deal.store }}</span>
+              {% endfor %}
+            </div>
+            <a href="{{ recipe.url }}" style="font-size:11px;color:#1a7f4b;font-weight:700;text-decoration:none">View &#x2192;</a>
+          </div>
+        </td>
+        {% endfor %}
+      </tr>
+    </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Deals by Store -->
+  <div style="padding:18px 20px 6px">
+    <div style="font-size:18px;font-weight:800;color:#1a1a1a">&#x1F3EA; Deals By Store</div>
+  </div>
+
+  {% for store, store_deals in deals_by_store.items() %}
+  {% set color = store_colors[store]["main"] %}
+  {% set light = store_colors[store]["light"] %}
+  <div style="margin:8px 20px 6px;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <div style="background:{{ color }};padding:12px 16px">
+      <span style="background:white;color:{{ color }};font-weight:900;font-size:13px;padding:3px 10px;border-radius:20px;margin-right:8px">{{ store.upper() }}</span>
+      <span style="color:rgba(255,255,255,0.9);font-size:12px">{{ store_deals|length }} deal{% if store_deals|length != 1 %}s{% endif %} this week</span>
+      {% if store == "Maxi" %}
+      <span style="float:right;background:rgba(255,255,255,0.2);color:white;font-size:11px;padding:2px 8px;border-radius:10px">&#x2B50; Prioritized</span>
+      {% endif %}
+    </div>
+    {% for deal in store_deals %}
+    <div style="display:flex;align-items:center;padding:10px 16px;{% if not loop.last %}border-bottom:1px solid #f5f5f5{% endif %}">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px;color:#1a1a1a">{{ deal.name }}</div>
+        <div style="color:#999;font-size:11px">{{ deal.description }}</div>
+      </div>
+      <div style="text-align:right">
+        <span style="font-weight:800;font-size:15px;color:{{ color }}">${{ "%.2f"|format(deal.sale_price) }}</span>
+        {% if deal.original_price %}
+        <span style="color:#bbb;text-decoration:line-through;font-size:11px;margin-left:6px">${{ "%.2f"|format(deal.original_price) }}</span>
+        {% endif %}
+        {% if deal.discount_pct %}
+        <div style="margin-top:2px">
+          <span style="background:{{ light }};color:{{ color }};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">-{{ deal.discount_pct|int }}%</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <!-- Footer -->
+  <div style="padding:20px 28px;text-align:center;font-size:11px;color:#aaa">
+    GroceryBot &middot; Deals valid as of {{ date }} &middot; Sherbrooke, QC
+  </div>
+
+</div>
+</body>
+</html>
