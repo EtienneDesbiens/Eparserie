@@ -71,39 +71,39 @@ Data Models:
 
 ## Running the Bot
 
-### Setup: Mailtrap SMTP (Simple, No OAuth)
+### Setup: Brevo SMTP (Simple, No OAuth)
 
 **One-time setup (2 minutes):**
-1. Sign up (free): https://mailtrap.io/
-2. Create an inbox (Projects → New Project → New Inbox)
-3. Go to SMTP settings (Integration → SMTP)
-4. Copy your credentials:
-   - SMTP Host: `live.smtp.mailtrap.io`
-   - Username: `your_mailtrap_username`
-   - Password: `your_mailtrap_password`
-5. Add to `.env`:
+1. Sign up (free): https://www.brevo.com/
+2. Go to Settings → SMTP & API
+3. Copy your credentials:
+   - SMTP Host: `smtp-relay.brevo.com`
+   - Email: your-email@example.com
+   - SMTP Password: (from Settings)
+4. Add to `.env`:
    ```
-   MAILTRAP_USERNAME=your_mailtrap_username
-   MAILTRAP_PASSWORD=your_mailtrap_password
+   BREVO_EMAIL=your-email@example.com
+   BREVO_API_KEY=your_smtp_password
+   EMAIL_FROM=noreply@grocerybot.local
    EMAIL_RECIPIENT=your-email@example.com
    ```
 
 **Run:**
 ```bash
-cp .env.example .env  # Fill in Mailtrap credentials
+cp .env.example .env  # Fill in Brevo credentials
 pip install -r requirements.txt
 python main.py
 ```
 
-**Check emails:** Go to https://mailtrap.io/ → your inbox to see sent emails
+**Check emails:** Go to https://www.brevo.com/ → Transactional to see sent emails
 
-### Why Mailtrap?
+### Why Brevo?
 
-✅ **No OAuth complexity** — just username + password
-✅ **Free tier** — 500 test emails/month, perfect for development
-✅ **Works from anywhere** — no Google Cloud setup needed
-✅ **Great for testing** — see HTML rendering in inbox
-✅ **Production ready** — upgrade plan for real sending when needed
+✅ **No OAuth complexity** — just email + password
+✅ **Free tier** — 300 emails/day (plenty for daily runs)
+✅ **Real emails** — reaches actual inboxes, not a testing service
+✅ **Production ready** — used by thousands of companies
+✅ **Professional delivery** — better than Mailtrap for real use
 
 ### Scheduling
 
