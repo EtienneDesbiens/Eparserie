@@ -50,8 +50,37 @@ def send_email(
     app_password: str,
     recipient: str,
 ) -> None:
+    """
+    Send email via Gmail.
+    Tries OAuth 2.0 first (recommended, secure), falls back to SMTP with app password.
+    """
+    subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
+
+    # Try OAuth 2.0 first (more secure)
+    try:
+        from gmail_oauth import send_email_oauth
+        send_email_oauth(html, gmail_address, recipient, subject)
+        return
+    except (ImportError, FileNotFoundError):
+        # OAuth credentials not set up, fall back to SMTP
+        pass
+    except Exception as e:
+        print(f"OAuth failed ({e}), falling back to SMTP...")
+
+    # Fallback: SMTP with app password
+    send_email_smtp(html, gmail_address, app_password, recipient, subject)
+
+
+def send_email_smtp(
+    html: str,
+    gmail_address: str,
+    app_password: str,
+    recipient: str,
+    subject: str,
+) -> None:
+    """Legacy SMTP method (less secure, deprecated by Google)."""
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
+    msg["Subject"] = subject
     msg["From"] = gmail_address
     msg["To"] = recipient
     msg.attach(MIMEText("Grocery deals this week. Enable HTML to view the full email.", "plain"))
