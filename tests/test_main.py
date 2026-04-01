@@ -21,8 +21,8 @@ COSTCO_DEALS = [make_deal("Costco", "Salmon", None)]
 def test_run_happy_path(mock_cfg, mock_flipp, mock_costco, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        gmail_address="a@gmail.com", gmail_app_password="pw",
-        email_recipient="b@gmail.com", max_deals_per_store=10,
+        email_from="noreply@grocerybot.local", mailtrap_username="user", mailtrap_password="pw",
+        email_recipient="b@example.com", max_deals_per_store=10,
     )
     from main import run
     run()
@@ -42,8 +42,8 @@ def test_run_flipp_failure_uses_demo_data(mock_cfg, mock_flipp, mock_recipes, mo
     # When both scrapers fail, demo data is used
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        gmail_address="a@gmail.com", gmail_app_password="pw",
-        email_recipient="b@gmail.com", max_deals_per_store=10,
+        email_from="noreply@grocerybot.local", mailtrap_username="user", mailtrap_password="pw",
+        email_recipient="b@example.com", max_deals_per_store=10,
     )
     from main import run
     run()
@@ -61,8 +61,8 @@ def test_run_flipp_failure_uses_demo_data(mock_cfg, mock_flipp, mock_recipes, mo
 def test_run_respects_max_deals_per_store(mock_cfg, mock_flipp, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        gmail_address="a@gmail.com", gmail_app_password="pw",
-        email_recipient="b@gmail.com", max_deals_per_store=5,
+        email_from="noreply@grocerybot.local", mailtrap_username="user", mailtrap_password="pw",
+        email_recipient="b@example.com", max_deals_per_store=5,
     )
     from main import run
     run()

@@ -4,9 +4,10 @@ from config import load_config, Config
 
 VALID_ENV = {
     "POSTAL_CODE": "J1H2B4",
-    "GMAIL_ADDRESS": "test@gmail.com",
-    "GMAIL_APP_PASSWORD": "abcd-efgh-ijkl-mnop",
-    "EMAIL_RECIPIENT": "me@gmail.com",
+    "EMAIL_FROM": "noreply@grocerybot.local",
+    "EMAIL_RECIPIENT": "me@example.com",
+    "MAILTRAP_USERNAME": "test_user",
+    "MAILTRAP_PASSWORD": "test_password",
     "SPOONACULAR_API_KEY": "abc123",
     "MAX_DEALS_PER_STORE": "10",
 }
@@ -30,18 +31,9 @@ def test_load_config_default_max_deals():
 
 
 def test_load_config_missing_required_key():
-    # GMAIL_APP_PASSWORD is now optional (OAuth preferred)
+    # MAILTRAP_PASSWORD is required
     env = {k: v for k, v in VALID_ENV.items() if k != "SPOONACULAR_API_KEY"}
     with patch("config.load_dotenv"):
         with patch.dict("os.environ", env, clear=True):
             with pytest.raises(KeyError):
                 load_config()
-
-
-def test_load_config_gmail_app_password_optional():
-    # GMAIL_APP_PASSWORD is optional - defaults to empty string
-    env = {k: v for k, v in VALID_ENV.items() if k != "GMAIL_APP_PASSWORD"}
-    with patch("config.load_dotenv"):
-        with patch.dict("os.environ", env, clear=True):
-            cfg = load_config()
-    assert cfg.gmail_app_password == ""  # Defaults to empty for OAuth

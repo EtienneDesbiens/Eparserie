@@ -26,23 +26,37 @@ def get_gmail_service(gmail_address: str) -> any:
 
     # Load existing token if available
     if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, "rb") as token:
-            creds = pickle.load(token)
+        try:
+            with open(TOKEN_FILE, "rb") as token:
+                creds = pickle.load(token)
+        except Exception as e:
+            print(f"⚠ Token cache corrupted, will re-authenticate: {e}")
+            creds = None
 
     # Refresh token if expired
     if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+        try:
+            creds.refresh(Request())
+        except Exception as e:
+            print(f"⚠ Token refresh failed, re-authenticating: {e}")
+            creds = None
 
     # New authentication flow if no token
     if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            CREDENTIALS_FILE, SCOPES
-        )
-        creds = flow.run_local_server(port=0)
+        try:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                CREDENTIALS_FILE, SCOPES
+            )
+            creds = flow.run_local_server(port=0)
 
-        # Save token for future runs
-        with open(TOKEN_FILE, "wb") as token:
-            pickle.dump(creds, token)
+            # Save token for future runs
+            with open(TOKEN_FILE, "wb") as token:
+                pickle.dump(creds, token)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"{CREDENTIALS_FILE} not found. "
+                "Download OAuth credentials from Google Cloud Console and save as gmail_credentials.json"
+            )
 
     return build("gmail", "v1", credentials=creds)
 

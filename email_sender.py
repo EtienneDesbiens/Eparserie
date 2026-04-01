@@ -46,63 +46,30 @@ def render_email(
 
 def send_email(
     html: str,
-    gmail_address: str,
-    app_password: str,
-    recipient: str,
+    email_from: str,
+    mailtrap_username: str,
+    mailtrap_password: str,
+    email_recipient: str,
 ) -> None:
     """
-    Send email via Gmail.
-    Tries OAuth 2.0 first (recommended, secure), falls back to SMTP with app password.
+    Send email via Mailtrap SMTP (simple, no OAuth needed).
     """
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
-    # Try OAuth 2.0 first (more secure)
-    oauth_error = None
-    try:
-        from gmail_oauth import send_email_oauth
-        send_email_oauth(html, gmail_address, recipient, subject)
-        return
-    except FileNotFoundError as e:
-        # OAuth credentials not set up
-        oauth_error = f"gmail_credentials.json not found: {e}"
-    except ImportError as e:
-        # OAuth dependencies not installed
-        oauth_error = f"OAuth dependencies missing: {e}"
-    except Exception as e:
-        # Other OAuth errors
-        oauth_error = f"OAuth error: {type(e).__name__}: {e}"
-
-    # Log why OAuth failed
-    if oauth_error:
-        import sys
-        print(f"⚠ {oauth_error}", file=sys.stderr)
-        print(f"⚠ Falling back to SMTP (less secure)...", file=sys.stderr)
-
-    # Fallback: SMTP with app password
-    send_email_smtp(html, gmail_address, app_password, recipient, subject)
-
-
-def send_email_smtp(
-    html: str,
-    gmail_address: str,
-    app_password: str,
-    recipient: str,
-    subject: str,
-) -> None:
-    """Legacy SMTP method (less secure, deprecated by Google)."""
-    if not app_password:
-        raise ValueError(
-            "GMAIL_APP_PASSWORD not configured. "
-            "Use OAuth instead (see OAUTH_SETUP.md) or set GMAIL_APP_PASSWORD in .env"
-        )
-
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = gmail_address
-    msg["To"] = recipient
+    msg["From"] = email_from
+    msg["To"] = email_recipient
+
+    # Plain text fallback
     msg.attach(MIMEText("Grocery deals this week. Enable HTML to view the full email.", "plain"))
+    # HTML version
     msg.attach(MIMEText(html, "html"))
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+
+    # Send via Mailtrap SMTP
+    with smtplib.SMTP("live.smtp.mailtrap.io", 587) as server:
         server.starttls()
-        server.login(gmail_address, app_password)
-        server.sendmail(gmail_address, recipient, msg.as_string())
+        server.login(mailtrap_username, mailtrap_password)
+        server.sendmail(email_from, email_recipient, msg.as_string())
+
+    print(f"✓ Email sent successfully to {email_recipient} via Mailtrap")
