@@ -24,20 +24,25 @@ def _get_publications(postal_code: str) -> list[dict]:
         "Referer": "https://flipp.com/",
         "X-Requested-With": "XMLHttpRequest",
     }
-    resp = requests.get(
-        PUBLICATIONS_URL,
-        params={"locale": "en-CA", "postal_code": postal_code},
-        headers=headers,
-        timeout=10,
-    )
-    resp.raise_for_status()
+    try:
+        resp = requests.get(
+            PUBLICATIONS_URL,
+            params={"locale": "en-CA", "postal_code": postal_code},
+            headers=headers,
+            timeout=10,
+        )
+        resp.raise_for_status()
 
-    # Validate response is JSON
-    content_type = resp.headers.get("content-type", "")
-    if "application/json" not in content_type:
-        raise ValueError(f"Expected JSON response, got {content_type}. Flipp API may have changed or is blocking access.")
+        # Validate response is JSON
+        content_type = resp.headers.get("content-type", "")
+        if "application/json" not in content_type:
+            raise ValueError(f"Flipp API is blocking or blocked. Expected JSON but got {content_type}. "
+                           "The API may require additional authentication or has been deprecated.")
 
-    return resp.json()
+        return resp.json()
+    except ValueError as e:
+        # Re-raise with context
+        raise RuntimeError(str(e))
 
 
 def _get_items(pub_id: int) -> list[dict]:
