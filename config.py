@@ -19,7 +19,7 @@ def load_config() -> Config:
     return Config(
         postal_code=os.environ["POSTAL_CODE"],
         gmail_address=os.environ["GMAIL_ADDRESS"],
-        gmail_app_password=os.environ["GMAIL_APP_PASSWORD"],
+        gmail_app_password=os.getenv("GMAIL_APP_PASSWORD", ""),  # Optional - OAuth preferred
         email_recipient=os.environ["EMAIL_RECIPIENT"],
         spoonacular_api_key=os.environ["SPOONACULAR_API_KEY"],
         max_deals_per_store=int(os.getenv("MAX_DEALS_PER_STORE", "10")),

@@ -30,8 +30,18 @@ def test_load_config_default_max_deals():
 
 
 def test_load_config_missing_required_key():
+    # GMAIL_APP_PASSWORD is now optional (OAuth preferred)
     env = {k: v for k, v in VALID_ENV.items() if k != "SPOONACULAR_API_KEY"}
     with patch("config.load_dotenv"):
         with patch.dict("os.environ", env, clear=True):
             with pytest.raises(KeyError):
                 load_config()
+
+
+def test_load_config_gmail_app_password_optional():
+    # GMAIL_APP_PASSWORD is optional - defaults to empty string
+    env = {k: v for k, v in VALID_ENV.items() if k != "GMAIL_APP_PASSWORD"}
+    with patch("config.load_dotenv"):
+        with patch.dict("os.environ", env, clear=True):
+            cfg = load_config()
+    assert cfg.gmail_app_password == ""  # Defaults to empty for OAuth

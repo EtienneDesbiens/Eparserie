@@ -79,6 +79,12 @@ def send_email_smtp(
     subject: str,
 ) -> None:
     """Legacy SMTP method (less secure, deprecated by Google)."""
+    if not app_password:
+        raise ValueError(
+            "GMAIL_APP_PASSWORD not configured. "
+            "Use OAuth instead (see OAUTH_SETUP.md) or set GMAIL_APP_PASSWORD in .env"
+        )
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = gmail_address
