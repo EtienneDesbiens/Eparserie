@@ -71,35 +71,39 @@ Data Models:
 
 ## Running the Bot
 
-### Option 1: OAuth 2.0 (Recommended, Secure)
+### Setup: Mailtrap SMTP (Simple, No OAuth)
 
-**One-time setup:**
-1. Create Google Cloud project: https://console.cloud.google.com/
-2. Enable Gmail API
-3. Create OAuth 2.0 credentials (Desktop app)
-4. Download JSON credentials → save as `gmail_credentials.json`
-5. First run: app opens browser for authentication
-6. Tokens saved automatically for future runs
+**One-time setup (2 minutes):**
+1. Sign up (free): https://mailtrap.io/
+2. Create an inbox (Projects → New Project → New Inbox)
+3. Go to SMTP settings (Integration → SMTP)
+4. Copy your credentials:
+   - SMTP Host: `live.smtp.mailtrap.io`
+   - Username: `your_mailtrap_username`
+   - Password: `your_mailtrap_password`
+5. Add to `.env`:
+   ```
+   MAILTRAP_USERNAME=your_mailtrap_username
+   MAILTRAP_PASSWORD=your_mailtrap_password
+   EMAIL_RECIPIENT=your-email@example.com
+   ```
 
 **Run:**
 ```bash
-cp .env.example .env
+cp .env.example .env  # Fill in Mailtrap credentials
 pip install -r requirements.txt
 python main.py
-# Browser opens for Gmail authorization (first run only)
 ```
 
-### Option 2: SMTP with App Password (Legacy, Deprecated in 2025+)
+**Check emails:** Go to https://mailtrap.io/ → your inbox to see sent emails
 
-Only used as fallback if OAuth not available.
+### Why Mailtrap?
 
-**Setup:**
-1. Enable 2FA on Gmail account
-2. Go to https://myaccount.google.com/apppasswords
-3. Generate app password for "Mail" on "Windows Computer"
-4. Add to `.env`: `GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx`
-
-**Note:** Google phased out this method in 2025. OAuth is required for new users.
+✅ **No OAuth complexity** — just username + password
+✅ **Free tier** — 500 test emails/month, perfect for development
+✅ **Works from anywhere** — no Google Cloud setup needed
+✅ **Great for testing** — see HTML rendering in inbox
+✅ **Production ready** — upgrade plan for real sending when needed
 
 ### Scheduling
 
