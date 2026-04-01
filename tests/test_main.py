@@ -8,17 +8,21 @@ def make_deal(store, name, disc=20.0):
                 sale_price=5.0, original_price=6.25, discount_pct=disc, valid_until=None)
 
 
-FLIPP_DEALS = [make_deal("Maxi", "Ground beef", 38.0), make_deal("IGA", "Broccoli", 30.0)]
-COSTCO_DEALS = [make_deal("Costco", "Salmon", None)]
+MAXI_DEALS = [make_deal("Maxi", "Ground beef", 38.0)]
+METRO_DEALS = []
+IGA_DEALS = [make_deal("IGA", "Broccoli", 30.0)]
+PROVIGO_DEALS = []
 
 
 @patch("main.send_email")
 @patch("main.render_email", return_value="<html>test</html>")
 @patch("main.fetch_recipes", return_value=[])
-@patch("main.fetch_costco_deals", return_value=COSTCO_DEALS)
-@patch("main.fetch_flipp_deals", return_value=FLIPP_DEALS)
+@patch("main.fetch_provigo_deals", return_value=PROVIGO_DEALS)
+@patch("main.fetch_iga_deals", return_value=IGA_DEALS)
+@patch("main.fetch_metro_deals", return_value=METRO_DEALS)
+@patch("main.fetch_maxi_deals", return_value=MAXI_DEALS)
 @patch("main.load_config")
-def test_run_happy_path(mock_cfg, mock_flipp, mock_costco, mock_recipes, mock_render, mock_send):
+def test_run_happy_path(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
         email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",
@@ -36,10 +40,13 @@ def test_run_happy_path(mock_cfg, mock_flipp, mock_costco, mock_recipes, mock_re
 @patch("main.send_email")
 @patch("main.render_email", return_value="<html>test</html>")
 @patch("main.fetch_recipes", return_value=[])
-@patch("main.fetch_flipp_deals", side_effect=Exception("API blocked"))
+@patch("main.fetch_provigo_deals", side_effect=Exception("Blocked"))
+@patch("main.fetch_iga_deals", side_effect=Exception("Blocked"))
+@patch("main.fetch_metro_deals", side_effect=Exception("Blocked"))
+@patch("main.fetch_maxi_deals", side_effect=Exception("Blocked"))
 @patch("main.load_config")
-def test_run_flipp_failure_uses_demo_data(mock_cfg, mock_flipp, mock_recipes, mock_render, mock_send):
-    # When both scrapers fail, demo data is used
+def test_run_all_scrapers_fail_uses_demo_data(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo, mock_recipes, mock_render, mock_send):
+    # When all scrapers fail, demo data is used
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
         email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",
@@ -56,9 +63,12 @@ def test_run_flipp_failure_uses_demo_data(mock_cfg, mock_flipp, mock_recipes, mo
 @patch("main.send_email")
 @patch("main.render_email", return_value="<html>test</html>")
 @patch("main.fetch_recipes", return_value=[])
-@patch("main.fetch_flipp_deals", return_value=[make_deal("Maxi", f"Item {i}") for i in range(20)])
+@patch("main.fetch_provigo_deals", return_value=[])
+@patch("main.fetch_iga_deals", return_value=[])
+@patch("main.fetch_metro_deals", return_value=[])
+@patch("main.fetch_maxi_deals", return_value=[make_deal("Maxi", f"Item {i}") for i in range(20)])
 @patch("main.load_config")
-def test_run_respects_max_deals_per_store(mock_cfg, mock_flipp, mock_recipes, mock_render, mock_send):
+def test_run_respects_max_deals_per_store(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
         email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",

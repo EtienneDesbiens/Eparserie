@@ -3,8 +3,10 @@ import logging
 from itertools import groupby
 
 from config import load_config
-from scrapers.flipp import fetch_flipp_deals
-from scrapers.costco import fetch_costco_deals
+from scrapers.maxi import fetch_maxi_deals
+from scrapers.metro import fetch_metro_deals
+from scrapers.iga import fetch_iga_deals
+from scrapers.provigo import fetch_provigo_deals
 from recipes import fetch_recipes
 from email_sender import render_email, send_email, STORE_ORDER
 
@@ -23,23 +25,22 @@ def run() -> None:
     all_deals = []
     failed_stores: list[str] = []
 
-    try:
-        flipp_deals = fetch_flipp_deals(config.postal_code)
-        all_deals.extend(flipp_deals)
-        log.info("Fetched %d deals from Flipp", len(flipp_deals))
-    except Exception as exc:
-        log.error("Flipp scraper failed: %s", exc)
-        log.warning("FLIPP API is currently inaccessible (blocking requests). Try: https://flipp.com manually to confirm.")
-        failed_stores.extend(["Maxi", "Provigo", "IGA", "Metro"])
+    # Scrape each store independently with error isolation
+    store_scrapers = {
+        "Maxi": fetch_maxi_deals,
+        "Metro": fetch_metro_deals,
+        "IGA": fetch_iga_deals,
+        "Provigo": fetch_provigo_deals,
+    }
 
-    # Temporarily disabled - Costco is blocking Playwright automation
-    # try:
-    #     costco_deals = fetch_costco_deals()
-    #     all_deals.extend(costco_deals)
-    #     log.info("Fetched %d deals from Costco", len(costco_deals))
-    # except Exception as exc:
-    #     log.error("Costco scraper failed: %s", exc)
-    #     failed_stores.append("Costco")
+    for store_name, scraper in store_scrapers.items():
+        try:
+            deals = scraper()
+            all_deals.extend(deals)
+            log.info("Fetched %d deals from %s", len(deals), store_name)
+        except Exception as exc:
+            log.error("%s scraper failed: %s", store_name, exc)
+            failed_stores.append(store_name)
 
     # Sort: Maxi first, then alphabetical; within each store sort by discount desc (None last)
     all_deals.sort(key=lambda d: (
