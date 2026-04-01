@@ -9,8 +9,8 @@ class Config:
     postal_code: str
     email_from: str
     email_recipient: str
-    mailtrap_username: str
-    mailtrap_password: str
+    brevo_email: str
+    brevo_api_key: str
     spoonacular_api_key: str
     max_deals_per_store: int
 
@@ -21,8 +21,8 @@ def load_config() -> Config:
         postal_code=os.environ["POSTAL_CODE"],
         email_from=os.environ.get("EMAIL_FROM", "noreply@grocerybot.local"),
         email_recipient=os.environ["EMAIL_RECIPIENT"],
-        mailtrap_username=os.environ["MAILTRAP_USERNAME"],
-        mailtrap_password=os.environ["MAILTRAP_PASSWORD"],
+        brevo_email=os.environ["BREVO_EMAIL"],
+        brevo_api_key=os.environ["BREVO_API_KEY"],
         spoonacular_api_key=os.environ["SPOONACULAR_API_KEY"],
         max_deals_per_store=int(os.getenv("MAX_DEALS_PER_STORE", "10")),
     )

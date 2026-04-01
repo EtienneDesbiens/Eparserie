@@ -47,12 +47,12 @@ def render_email(
 def send_email(
     html: str,
     email_from: str,
-    mailtrap_username: str,
-    mailtrap_password: str,
+    brevo_email: str,
+    brevo_api_key: str,
     email_recipient: str,
 ) -> None:
     """
-    Send email via Mailtrap SMTP (simple, no OAuth needed).
+    Send email via Brevo SMTP (simple, no OAuth needed).
     """
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
@@ -66,10 +66,10 @@ def send_email(
     # HTML version
     msg.attach(MIMEText(html, "html"))
 
-    # Send via Mailtrap SMTP
-    with smtplib.SMTP("live.smtp.mailtrap.io", 587) as server:
+    # Send via Brevo SMTP
+    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
         server.starttls()
-        server.login(mailtrap_username, mailtrap_password)
+        server.login(brevo_email, brevo_api_key)
         server.sendmail(email_from, email_recipient, msg.as_string())
 
-    print(f"✓ Email sent successfully to {email_recipient} via Mailtrap")
+    print(f"✓ Email sent successfully to {email_recipient} via Brevo")

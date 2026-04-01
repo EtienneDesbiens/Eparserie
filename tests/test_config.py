@@ -6,8 +6,8 @@ VALID_ENV = {
     "POSTAL_CODE": "J1H2B4",
     "EMAIL_FROM": "noreply@grocerybot.local",
     "EMAIL_RECIPIENT": "me@example.com",
-    "MAILTRAP_USERNAME": "test_user",
-    "MAILTRAP_PASSWORD": "test_password",
+    "BREVO_EMAIL": "noreply@example.com",
+    "BREVO_API_KEY": "test_api_key",
     "SPOONACULAR_API_KEY": "abc123",
     "MAX_DEALS_PER_STORE": "10",
 }
