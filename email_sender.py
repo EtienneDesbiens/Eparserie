@@ -57,15 +57,26 @@ def send_email(
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
     # Try OAuth 2.0 first (more secure)
+    oauth_error = None
     try:
         from gmail_oauth import send_email_oauth
         send_email_oauth(html, gmail_address, recipient, subject)
         return
-    except (ImportError, FileNotFoundError):
-        # OAuth credentials not set up, fall back to SMTP
-        pass
+    except FileNotFoundError as e:
+        # OAuth credentials not set up
+        oauth_error = f"gmail_credentials.json not found: {e}"
+    except ImportError as e:
+        # OAuth dependencies not installed
+        oauth_error = f"OAuth dependencies missing: {e}"
     except Exception as e:
-        print(f"OAuth failed ({e}), falling back to SMTP...")
+        # Other OAuth errors
+        oauth_error = f"OAuth error: {type(e).__name__}: {e}"
+
+    # Log why OAuth failed
+    if oauth_error:
+        import sys
+        print(f"⚠ {oauth_error}", file=sys.stderr)
+        print(f"⚠ Falling back to SMTP (less secure)...", file=sys.stderr)
 
     # Fallback: SMTP with app password
     send_email_smtp(html, gmail_address, app_password, recipient, subject)
