@@ -51,6 +51,7 @@ def _fetch_maxi_playwright() -> list[Deal]:
     """Launch headed Chromium with persistent profile to bypass Forter."""
     log.info("Launching headed browser for Maxi (profile: %s)", _PROFILE_DIR)
     captured: list[dict] = []
+    urls_seen = []
 
     with sync_playwright() as p:
         # launch_persistent_context keeps cookies + localStorage across runs
@@ -67,6 +68,11 @@ def _fetch_maxi_playwright() -> list[Deal]:
         page = context.new_page()
 
         def on_response(response):
+            # Track all Flipp-related URLs for debugging
+            if "flipp" in response.url.lower():
+                urls_seen.append(response.url)
+                log.debug("Maxi headed: Flipp URL: %s", response.url[:100])
+
             if (
                 "dam.flippenterprise.net" in response.url
                 and "/flyerkit/publication/" in response.url
@@ -78,18 +84,29 @@ def _fetch_maxi_playwright() -> list[Deal]:
                     if items:
                         log.info("Maxi: captured %d items from Flipp widget", len(items))
                         captured.extend(items)
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.debug("Maxi headed: Failed to parse Flipp response: %s", e)
 
         page.on("response", on_response)
-        page.goto(MAXI_URL, wait_until="domcontentloaded", timeout=30_000)
+        try:
+            page.goto(MAXI_URL, wait_until="domcontentloaded", timeout=30_000)
+        except Exception as e:
+            log.error("Maxi headed: Failed to load page: %s", e)
+
         page.wait_for_timeout(5_000)
         try:
             page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
             page.wait_for_timeout(2_000)
         except Exception:
             pass
+
         context.close()
+
+    # Debug: log what we saw
+    if urls_seen:
+        log.info("Maxi headed: Saw %d Flipp requests", len(urls_seen))
+    else:
+        log.warning("Maxi headed: No Flipp requests intercepted")
 
     if not captured:
         raise RuntimeError("No Flipp widget data captured from Maxi (headed browser)")
