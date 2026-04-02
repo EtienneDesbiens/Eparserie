@@ -54,11 +54,20 @@ _RESULTS_PER_CALL = 20
 _TOP_N_RECIPES = 5
 
 
+_INGREDIENT_CATEGORIES = {"Produce", "Meat & Seafood", "Dairy & Eggs"}
+
+
 def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
     if not deals:
         return []
 
-    raw_ingredients = list({extract_ingredient(d.name) for d in deals if extract_ingredient(d.name)})
+    # Only use produce, meat, and dairy deals as ingredients for recipe search —
+    # pantry/frozen/beverage items make poor recipe anchors and add noise.
+    ingredient_deals = [d for d in deals if d.category in _INGREDIENT_CATEGORIES]
+    if not ingredient_deals:
+        ingredient_deals = deals  # fall back to all deals if none are categorized
+
+    raw_ingredients = list({extract_ingredient(d.name) for d in ingredient_deals if extract_ingredient(d.name)})
     if not raw_ingredients:
         return []
 
