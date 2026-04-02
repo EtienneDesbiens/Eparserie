@@ -3,12 +3,30 @@ import logging
 from itertools import groupby
 
 from config import load_config
+from models import Deal
 from scrapers.maxi import fetch_maxi_deals
 from scrapers.metro import fetch_metro_deals
 from scrapers.iga import fetch_iga_deals
 from scrapers.provigo import fetch_provigo_deals
 from recipes import fetch_recipes
 from email_sender import render_email, send_email, STORE_ORDER
+
+# Non-food product keywords to exclude
+NON_FOOD_KEYWORDS = {
+    "shampoo", "conditioner", "soap", "detergent", "laundry", "dish liquid",
+    "paper towel", "tissue", "napkin", "toilet", "feminine", "deodorant",
+    "toothpaste", "toothbrush", "mouthwash", "floss", "vitamin", "supplement",
+    "medicine", "medication", "aspirin", "ibuprofen", "pain relief",
+    "pet food", "dog food", "cat food", "pet treat",
+    "garbage bag", "plastic bag", "trash", "foil", "wrap", "parchment",
+    "cleaning", "bleach", "disinfectant", "air freshener",
+}
+
+
+def _is_food_item(deal: Deal) -> bool:
+    """Check if a deal is a food/beverage item by filtering non-food keywords."""
+    text = f"{deal.name} {deal.description}".lower()
+    return not any(keyword in text for keyword in NON_FOOD_KEYWORDS)
 
 
 def run() -> None:
@@ -42,6 +60,11 @@ def run() -> None:
             log.error("%s scraper failed: %s", store_name, exc)
             failed_stores.append(store_name)
 
+    # Filter to food items only
+    food_deals = [d for d in all_deals if _is_food_item(d)]
+    log.info("Filtered to %d food items (removed %d non-food)", len(food_deals), len(all_deals) - len(food_deals))
+    all_deals = food_deals
+
     # Sort: Maxi first, then alphabetical; within each store sort by discount desc (None last)
     all_deals.sort(key=lambda d: (
         STORE_ORDER.index(d.store) if d.store in STORE_ORDER else 99,
@@ -56,7 +79,6 @@ def run() -> None:
     # If no deals were found, use demo data for testing (can be disabled)
     if not trimmed:
         log.warning("No deals found. Using demo data for email rendering test.")
-        from models import Deal
         trimmed = [
             Deal("Maxi", "Extra lean ground beef", "1 kg", 7.99, 12.99, 38.5, "2026-04-07"),
             Deal("Maxi", "Broccoli", "bunch", 1.49, 2.49, 40.2, "2026-04-07"),
