@@ -26,7 +26,7 @@ def test_run_happy_path(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo,
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
         email_from="noreply@grocerybot.local", mailersend_email="user@example.com", mailersend_api_key="pw",
-        email_recipient="b@example.com", max_deals_per_store=10,
+        email_recipients=["b@example.com"], max_deals_per_store=10,
     )
     from main import run
     run()
@@ -50,7 +50,7 @@ def test_run_all_scrapers_fail_uses_demo_data(mock_cfg, mock_maxi, mock_metro, m
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
         email_from="noreply@grocerybot.local", mailersend_email="user@example.com", mailersend_api_key="pw",
-        email_recipient="b@example.com", max_deals_per_store=10,
+        email_recipients=["b@example.com"], max_deals_per_store=10,
     )
     from main import run
     run()

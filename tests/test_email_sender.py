@@ -42,7 +42,7 @@ def test_send_email_mailersend(sample_deals, sample_recipe):
         MockSMTP.return_value.__enter__ = MagicMock(return_value=mock_instance)
         MockSMTP.return_value.__exit__ = MagicMock(return_value=False)
 
-        send_email(html, "noreply@grocerybot.local", "user@example.com", "api_key", "recipient@example.com")
+        send_email(html, "noreply@grocerybot.local", "user@example.com", "api_key", ["recipient@example.com"])
 
     # Verify Mailersend SMTP server was used
     MockSMTP.assert_called_once_with("smtp.mailersend.net", 587)

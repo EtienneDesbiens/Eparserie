@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 class Config:
     postal_code: str
     email_from: str
-    email_recipient: str
+    email_recipients: list[str]
     mailersend_email: str
     mailersend_api_key: str
     spoonacular_api_key: str
@@ -17,10 +17,14 @@ class Config:
 
 def load_config() -> Config:
     load_dotenv()
+    # Parse EMAIL_RECIPIENT as comma-separated list
+    email_recipient_str = os.environ["EMAIL_RECIPIENT"]
+    email_recipients = [e.strip() for e in email_recipient_str.split(",") if e.strip()]
+
     return Config(
         postal_code=os.environ["POSTAL_CODE"],
         email_from=os.environ.get("EMAIL_FROM", "noreply@grocerybot.local"),
-        email_recipient=os.environ["EMAIL_RECIPIENT"],
+        email_recipients=email_recipients,
         mailersend_email=os.environ["MAILERSEND_EMAIL"],
         mailersend_api_key=os.environ["MAILERSEND_API_KEY"],
         spoonacular_api_key=os.environ["SPOONACULAR_API_KEY"],

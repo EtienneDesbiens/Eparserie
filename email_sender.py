@@ -84,17 +84,17 @@ def send_email(
     email_from: str,
     mailersend_email: str,
     mailersend_api_key: str,
-    email_recipient: str,
+    email_recipients: list[str],
 ) -> None:
     """
-    Send email via Mailersend SMTP.
+    Send email via Mailersend SMTP to one or more recipients.
     """
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = email_from
-    msg["To"] = email_recipient
+    msg["To"] = ", ".join(email_recipients)
 
     # Plain text fallback
     msg.attach(MIMEText("Grocery deals this week. Enable HTML to view the full email.", "plain"))
@@ -105,6 +105,7 @@ def send_email(
     with smtplib.SMTP("smtp.mailersend.net", 587) as server:
         server.starttls()
         server.login(mailersend_email, mailersend_api_key)
-        server.sendmail(email_from, email_recipient, msg.as_string())
+        server.sendmail(email_from, email_recipients, msg.as_string())
 
-    print(f"Email sent successfully to {email_recipient} via Mailersend")
+    recipients_str = ", ".join(email_recipients)
+    print(f"Email sent successfully to {recipients_str} via Mailersend")

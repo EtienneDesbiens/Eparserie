@@ -37,3 +37,19 @@ def test_load_config_missing_required_key():
         with patch.dict("os.environ", env, clear=True):
             with pytest.raises(KeyError):
                 load_config()
+
+
+def test_load_config_single_email_recipient():
+    with patch("config.load_dotenv"):
+        with patch.dict("os.environ", VALID_ENV, clear=True):
+            cfg = load_config()
+    assert cfg.email_recipients == ["me@example.com"]
+
+
+def test_load_config_multiple_email_recipients():
+    env = VALID_ENV.copy()
+    env["EMAIL_RECIPIENT"] = "alice@example.com, bob@example.com, charlie@example.com"
+    with patch("config.load_dotenv"):
+        with patch.dict("os.environ", env, clear=True):
+            cfg = load_config()
+    assert cfg.email_recipients == ["alice@example.com", "bob@example.com", "charlie@example.com"]
