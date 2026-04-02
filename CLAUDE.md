@@ -84,15 +84,19 @@ Different stores have different antibot protection levels:
 - **Metro/Provigo:** Have Forter protection (like Maxi), but their upstream APIs are also blocked. Fallback to demo data.
 
 **Current Status:**
-- ✅ **IGA:** Successfully captures and parses ~313 deals per run via Playwright network interception
-- ⚠️ **Maxi:** 
-  - HTTP API blocked (returns HTML)
-  - Headed browser fallback implemented; successfully loads page without Forter blocking
-  - Challenge: Maxi uses proprietary Loblaws JavaScript to dynamically load deal data (not via interceptable HTTP API)
-  - Requires either: reverse-engineering Loblaws API, DOM parsing, or access to undocumented endpoints
-- ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection); would need similar headed browser approach
+- ✅ **Maxi:** Successfully captures and parses ~244-269 deals per run via headed Playwright browser with network interception
+  - Correct flyer URL: `https://www.maxi.ca/en/print-flyer?navid=flyout-L2-Flyer`
+  - Forter doesn't detect headed browsers (no `navigator.webdriver` flag)
+  - Persistent profile (`browser_profiles/maxi/`) maintains session cookies
+- ✅ **IGA:** Successfully captures and parses ~313 deals per run via headless Playwright network interception
+- ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection); would need headed browser approach
 
-The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function reliably. With 313 deals/run from IGA and robust fallback behavior, the system delivers value despite Forter antibot protections.
+**Email Pipeline Results:**
+- Combined ~557 deals per run (244 Maxi + 313 IGA)
+- 10 recipe suggestions via Spoonacular API
+- Reliable delivery via Mailersend SMTP
+
+The system is now fully functional with real data from two major stores and graceful fallback for unavailable sources.
 
 ## Running the Bot
 
