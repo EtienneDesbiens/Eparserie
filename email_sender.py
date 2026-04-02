@@ -72,4 +72,4 @@ def send_email(
         server.login(brevo_email, brevo_api_key)
         server.sendmail(email_from, email_recipient, msg.as_string())
 
-    print(f"✓ Email sent successfully to {email_recipient} via Brevo")
+    print(f"Email sent successfully to {email_recipient} via Brevo")

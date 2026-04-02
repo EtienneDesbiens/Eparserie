@@ -64,7 +64,7 @@ def test_parse_items_no_original_price():
 def test_fetch_store_deals_captures_flipp_json():
     """Test that fetch_store_deals intercepts Flipp widget JSON responses."""
     mock_response = MagicMock()
-    mock_response.url = "https://cdn.flipp.com/flyerkit/publications/12345/items"
+    mock_response.url = "https://dam.flippenterprise.net/flyerkit/publication/12345/products?display_type=all"
     mock_response.json.return_value = FAKE_ITEMS
 
     with patch("scrapers.store_flyer.sync_playwright") as MockPlaywright:
