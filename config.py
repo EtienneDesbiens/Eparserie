@@ -25,7 +25,7 @@ def load_config() -> Config:
     return Config(
         postal_code=os.environ["POSTAL_CODE"],
         email_from=os.environ.get("EMAIL_FROM", "noreply@grocerybot.local"),
-        email_from_name=os.environ.get("EMAIL_FROM_NAME", ""),
+        email_from_name=os.environ.get("EMAIL_FROM_NAME", "EparseRIE@bouffe.deal"),
         email_recipients=email_recipients,
         mailersend_email=os.environ["MAILERSEND_EMAIL"],
         mailersend_api_key=os.environ["MAILERSEND_API_KEY"],
