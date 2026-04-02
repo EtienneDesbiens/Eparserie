@@ -104,7 +104,7 @@ def run() -> None:
         except Exception as exc:
             log.error("Recipe fetch failed: %s", exc)
 
-    html = render_email(trimmed, recipes, failed_stores)
+    html = render_email(trimmed, recipes, failed_stores, config.postal_code)
     send_email(html, config.email_from, config.mailersend_email, config.mailersend_api_key, config.email_recipient)
     log.info("Email sent successfully")
 

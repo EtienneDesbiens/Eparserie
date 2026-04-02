@@ -23,6 +23,7 @@ def render_email(
     deals: list[Deal],
     recipes: list[Recipe],
     failed_stores: list[str],
+    postal_code: str = "QC",
 ) -> str:
     stores_present = sorted(
         {d.store for d in deals},
@@ -32,15 +33,28 @@ def render_email(
         store: [d for d in deals if d.store == store]
         for store in stores_present
     }
+
+    # Calculate total savings per store
+    store_savings = {}
+    for store, store_deals in deals_by_store.items():
+        total_savings = sum(
+            (d.original_price or d.sale_price) - d.sale_price
+            for d in store_deals
+            if d.original_price
+        )
+        store_savings[store] = total_savings
+
     template = _jinja_env.get_template("email.html")
     return template.render(
         deals_by_store=deals_by_store,
         recipes=recipes,
         store_colors=STORE_COLORS,
+        store_savings=store_savings,
         failed_stores=failed_stores,
         date=date.today().strftime("%B %d, %Y"),
         total_deals=len(deals),
         total_stores=len(stores_present),
+        postal_code=postal_code,
     )
 
 
