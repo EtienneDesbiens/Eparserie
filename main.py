@@ -17,9 +17,10 @@ NON_FOOD_KEYWORDS = {
     "paper towel", "tissue", "napkin", "toilet", "feminine", "deodorant",
     "toothpaste", "toothbrush", "mouthwash", "floss", "vitamin", "supplement",
     "medicine", "medication", "aspirin", "ibuprofen", "pain relief",
-    "pet food", "dog food", "cat food", "pet treat",
+    "pet food", "dog food", "cat food", "pet treat", "pet", "animal", "animaux", "chat", "chien", "cat", "dog",
     "garbage bag", "plastic bag", "trash", "foil", "wrap", "parchment",
     "cleaning", "bleach", "disinfectant", "air freshener",
+    "cookware", "ensemble", "table", "outil", "tool",
 }
 
 
@@ -32,6 +33,54 @@ def _is_food_item(deal: Deal) -> bool:
 def _is_reasonable_price(deal: Deal, max_price: float = 50.0) -> bool:
     """Filter out items over a reasonable price threshold."""
     return deal.sale_price <= max_price
+
+
+def _categorize_deal(deal: Deal) -> str:
+    """Categorize a deal based on its name and description."""
+    text = f"{deal.name} {deal.description}".lower()
+
+    # Define category keywords
+    categories = {
+        "Produce": {
+            "apple", "banana", "orange", "grape", "strawberry", "blueberry",
+            "carrot", "broccoli", "spinach", "lettuce", "tomato", "onion",
+            "potato", "pepper", "cucumber", "mushroom", "avocado", "lime",
+            "lemon", "fruit", "vegetable", "veggie", "produce",
+            "pomme", "banane", "orange", "fraise", "carotte", "brocoli",
+            "tomate", "oignon", "patate", "legume",
+        },
+        "Meat & Seafood": {
+            "chicken", "beef", "pork", "lamb", "veal", "turkey", "ham",
+            "salmon", "tuna", "cod", "trout", "shrimp", "fish", "seafood",
+            "steak", "ground", "breast", "wing", "leg",
+            "poulet", "boeuf", "porc", "agneau", "veau", "dinde", "jambon",
+            "saumon", "thon", "morue", "truite", "crevette", "poisson",
+        },
+        "Dairy & Eggs": {
+            "milk", "cheese", "yogurt", "butter", "cream", "egg",
+            "fromage", "lait", "beurre", "creme", "oeuf",
+        },
+        "Frozen": {
+            "frozen", "ice", "fries", "pizza", "tv dinner", "popsicle",
+            "surgele", "glace",
+        },
+        "Pantry": {
+            "pasta", "rice", "bread", "cereal", "flour", "sugar", "oil",
+            "sauce", "jam", "peanut butter", "canned", "beans", "lentils",
+            "pates", "riz", "pain", "sucre", "huile",
+        },
+        "Beverages": {
+            "juice", "milk", "coffee", "tea", "soda", "water", "wine",
+            "beer", "smoothie", "drink",
+            "jus", "cafe", "the", "eau",
+        },
+    }
+
+    for category, keywords in categories.items():
+        if any(keyword in text for keyword in keywords):
+            return category
+
+    return "Other"
 
 
 def run() -> None:
@@ -72,6 +121,10 @@ def run() -> None:
     # Filter to reasonable prices (under $50)
     priced_deals = [d for d in food_deals if _is_reasonable_price(d)]
     log.info("Filtered to %d reasonably priced items (removed %d over $50)", len(priced_deals), len(food_deals) - len(priced_deals))
+
+    # Categorize deals
+    for deal in priced_deals:
+        deal.category = _categorize_deal(deal)
 
     all_deals = priced_deals
 

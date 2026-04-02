@@ -3,6 +3,7 @@ import smtplib
 from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from itertools import groupby
 from jinja2 import Environment, FileSystemLoader
 from models import Deal, Recipe
 
@@ -17,6 +18,19 @@ STORE_COLORS: dict[str, dict[str, str]] = {
 STORE_ORDER = ["Maxi", "IGA", "Metro", "Provigo", "Costco"]
 
 _jinja_env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
+
+# Category display order
+CATEGORY_ORDER = ["Produce", "Meat & Seafood", "Dairy & Eggs", "Frozen", "Pantry", "Beverages", "Other"]
+
+
+def _group_deals_by_category(deals: list[Deal]) -> dict[str, list[Deal]]:
+    """Group deals by category with consistent ordering."""
+    grouped = {}
+    for category in CATEGORY_ORDER:
+        category_deals = [d for d in deals if d.category == category]
+        if category_deals:
+            grouped[category] = category_deals
+    return grouped
 
 
 def render_email(
@@ -34,6 +48,12 @@ def render_email(
         for store in stores_present
     }
 
+    # Group deals by category within each store
+    deals_by_store_category = {
+        store: _group_deals_by_category(store_deals)
+        for store, store_deals in deals_by_store.items()
+    }
+
     # Calculate total savings per store
     store_savings = {}
     for store, store_deals in deals_by_store.items():
@@ -47,6 +67,7 @@ def render_email(
     template = _jinja_env.get_template("email.html")
     return template.render(
         deals_by_store=deals_by_store,
+        deals_by_store_category=deals_by_store_category,
         recipes=recipes,
         store_colors=STORE_COLORS,
         store_savings=store_savings,
