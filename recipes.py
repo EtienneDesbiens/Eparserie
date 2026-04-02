@@ -25,75 +25,20 @@ except ImportError:
     _translator = None
     _has_translator = False
 
-# Common French-to-English grocery terms for fallback
-_FRENCH_ENGLISH_FOODS = {
-    "poulet": "chicken",
-    "porc": "pork",
-    "boeuf": "beef",
-    "veau": "veal",
-    "agneau": "lamb",
-    "poisson": "fish",
-    "saumon": "salmon",
-    "truite": "trout",
-    "morue": "cod",
-    "oeufs": "eggs",
-    "oeuf": "egg",
-    "fromage": "cheese",
-    "lait": "milk",
-    "yogourt": "yogurt",
-    "beurre": "butter",
-    "pain": "bread",
-    "riz": "rice",
-    "pates": "pasta",
-    "patates": "potatoes",
-    "pommes": "apples",
-    "oranges": "oranges",
-    "bananes": "bananas",
-    "fraises": "strawberries",
-    "bleuets": "blueberries",
-    "brocoli": "broccoli",
-    "chou": "cabbage",
-    "carrotes": "carrots",
-    "carotte": "carrot",
-    "oignons": "onions",
-    "oignon": "onion",
-    "tomates": "tomatoes",
-    "tomate": "tomato",
-    "laitue": "lettuce",
-    "epinards": "spinach",
-    "haricots": "beans",
-    "pois": "peas",
-    "mais": "corn",
-    "champignons": "mushrooms",
-    "champignon": "mushroom",
-    "cerises": "cherries",
-    "raisins": "grapes",
-}
-
-
 def _translate_to_english(text: str) -> str:
-    """Translate French text to English, with fallback to manual mapping."""
+    """Translate text to English using Google Translate."""
     if not text:
         return text
 
-    lower_text = text.lower()
-
-    # Try manual mapping first (fastest, most reliable)
-    if lower_text in _FRENCH_ENGLISH_FOODS:
-        return _FRENCH_ENGLISH_FOODS[lower_text]
-
-    # Try googletrans if available
     if _has_translator:
         try:
-            # googletrans API: result has .text attribute
             result = _translator.translate(text, src_lang="fr", dest_lang="en")
             translated = result.text if hasattr(result, "text") else str(result)
             return translated.lower()
         except Exception as e:
             log.debug("Translation failed for '%s': %s", text, e)
-            return lower_text
 
-    return lower_text
+    return text.lower()
 
 
 def extract_ingredient(name: str) -> str:
