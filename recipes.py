@@ -60,8 +60,17 @@ def _is_meal_recipe(raw: dict) -> bool:
 
 
 def _score_recipe(raw: dict, deals: list[Deal]) -> tuple[float, Recipe]:
-    used_names = {i["name"].lower() for i in raw.get("usedIngredients", [])}
-    matched = [d for d in deals if any(u in d.name.lower() for u in used_names)]
+    used_ingredients = raw.get("usedIngredients", [])
+    used_names = {i["name"].lower() for i in used_ingredients}
+
+    # Match deals: check if any ingredient word appears in deal name
+    matched = []
+    for deal in deals:
+        deal_text = f"{deal.name} {deal.description}".lower()
+        # Check if any ingredient appears in the deal text
+        if any(_ingredient_matches(u, deal_text) for u in used_names):
+            matched.append(deal)
+
     maxi_count = sum(1 for d in matched if d.store == "Maxi")
     stores = {d.store for d in matched}
     score = len(matched) * 10 - len(stores) * 5 + maxi_count * 3
@@ -74,3 +83,13 @@ def _score_recipe(raw: dict, deals: list[Deal]) -> tuple[float, Recipe]:
         matched_deals=matched,
         store_count=len(stores),
     )
+
+
+def _ingredient_matches(ingredient: str, deal_text: str) -> bool:
+    """Check if an ingredient matches a deal by word overlap."""
+    # Split ingredient and deal text into words
+    ingredient_words = set(ingredient.split())
+    deal_words = set(deal_text.split())
+    # Match if there's any word overlap (excluding single letters)
+    overlap = ingredient_words & deal_words
+    return any(len(word) > 1 for word in overlap)
