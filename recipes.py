@@ -30,13 +30,33 @@ def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
         return []
     resp = requests.get(
         SPOONACULAR_URL,
-        params={"ingredients": ",".join(ingredients), "number": 10, "apiKey": api_key},
+        params={
+            "ingredients": ",".join(ingredients),
+            "number": 10,
+            "ranking": 1,
+            "ignorepantry": "true",
+            "apiKey": api_key,
+        },
         timeout=10,
     )
     resp.raise_for_status()
-    scored = [_score_recipe(r, deals) for r in resp.json()]
+    scored = [_score_recipe(r, deals) for r in resp.json() if _is_meal_recipe(r)]
     scored.sort(key=lambda x: x[0], reverse=True)
     return [recipe for _, recipe in scored[:10]]
+
+
+def _is_meal_recipe(raw: dict) -> bool:
+    """Filter to meal recipes, excluding desserts, snacks, and drinks."""
+    dish_types = raw.get("dishTypes", [])
+    if not dish_types:
+        return True
+
+    exclude_types = {"dessert", "snack", "appetizer", "drink", "beverage", "sauce", "condiment"}
+    # Check if any dishType is in the exclude list
+    if any(dt.lower() in exclude_types for dt in dish_types):
+        return False
+
+    return True
 
 
 def _score_recipe(raw: dict, deals: list[Deal]) -> tuple[float, Recipe]:
