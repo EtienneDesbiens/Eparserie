@@ -85,15 +85,27 @@ def send_email(
     mailersend_email: str,
     mailersend_api_key: str,
     email_recipients: list[str],
+    email_from_name: str = "",
 ) -> None:
     """
     Send email via Mailersend SMTP to one or more recipients.
+
+    Args:
+        html: Email body HTML
+        email_from: Email address to send from
+        mailersend_email: SMTP username
+        mailersend_api_key: SMTP password
+        email_recipients: List of recipient addresses
+        email_from_name: Optional display name for sender (e.g., "GroceryBot")
     """
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
+    # Format From header: "Display Name <email@domain.com>" or just "email@domain.com"
+    from_header = f"{email_from_name} <{email_from}>" if email_from_name else email_from
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = email_from
+    msg["From"] = from_header
     msg["To"] = ", ".join(email_recipients)
 
     # Plain text fallback

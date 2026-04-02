@@ -158,7 +158,7 @@ def run() -> None:
             log.error("Recipe fetch failed: %s", exc)
 
     html = render_email(trimmed, recipes, failed_stores, config.postal_code)
-    send_email(html, config.email_from, config.mailersend_email, config.mailersend_api_key, config.email_recipients)
+    send_email(html, config.email_from, config.mailersend_email, config.mailersend_api_key, config.email_recipients, config.email_from_name)
     log.info("Email sent successfully")
 
 

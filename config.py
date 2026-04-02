@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 class Config:
     postal_code: str
     email_from: str
+    email_from_name: str
     email_recipients: list[str]
     mailersend_email: str
     mailersend_api_key: str
@@ -24,6 +25,7 @@ def load_config() -> Config:
     return Config(
         postal_code=os.environ["POSTAL_CODE"],
         email_from=os.environ.get("EMAIL_FROM", "noreply@grocerybot.local"),
+        email_from_name=os.environ.get("EMAIL_FROM_NAME", ""),
         email_recipients=email_recipients,
         mailersend_email=os.environ["MAILERSEND_EMAIL"],
         mailersend_api_key=os.environ["MAILERSEND_API_KEY"],

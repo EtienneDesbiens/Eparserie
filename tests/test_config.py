@@ -53,3 +53,19 @@ def test_load_config_multiple_email_recipients():
         with patch.dict("os.environ", env, clear=True):
             cfg = load_config()
     assert cfg.email_recipients == ["alice@example.com", "bob@example.com", "charlie@example.com"]
+
+
+def test_load_config_email_from_name():
+    env = VALID_ENV.copy()
+    env["EMAIL_FROM_NAME"] = "GroceryBot"
+    with patch("config.load_dotenv"):
+        with patch.dict("os.environ", env, clear=True):
+            cfg = load_config()
+    assert cfg.email_from_name == "GroceryBot"
+
+
+def test_load_config_email_from_name_optional():
+    with patch("config.load_dotenv"):
+        with patch.dict("os.environ", VALID_ENV, clear=True):
+            cfg = load_config()
+    assert cfg.email_from_name == ""
