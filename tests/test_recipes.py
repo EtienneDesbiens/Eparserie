@@ -32,8 +32,8 @@ def test_score_recipe_all_maxi():
         "missedIngredients": [],
     }
     score, recipe = _score_recipe(raw, deals)
-    # 2 matched * 10 - 1 store * 5 + 2 maxi * 3 = 20 - 5 + 6 = 21
-    assert score == 21
+    # coverage = 2/2 = 1.0 → 100 + 2 maxi * 3 - (1-1)*5 = 106
+    assert score == pytest.approx(106.0)
     assert recipe.store_count == 1
     assert len(recipe.matched_deals) == 2
 
@@ -48,9 +48,46 @@ def test_score_recipe_penalizes_multiple_stores():
         "missedIngredients": [],
     }
     score, recipe = _score_recipe(raw, deals)
-    # 2 matched * 10 - 2 stores * 5 + 1 maxi * 3 = 20 - 10 + 3 = 13
-    assert score == 13
+    # coverage = 2/2 = 1.0 → 100 + 1 maxi * 3 - (2-1)*5 = 98
+    assert score == pytest.approx(98.0)
     assert recipe.store_count == 2
+
+
+def test_score_recipe_coverage_beats_absolute_count():
+    """A recipe with 3/4 ingredients on sale beats one with 2/10."""
+    deals_a = [make_deal("Maxi", "chicken"), make_deal("Maxi", "broccoli"), make_deal("Maxi", "garlic")]
+    raw_a = {
+        "id": 10, "title": "Chicken Stir Fry", "image": "",
+        "usedIngredients": [{"name": "chicken"}, {"name": "broccoli"}, {"name": "garlic"}],
+        "missedIngredients": [{"name": "soy sauce"}],  # 3/4 = 75% coverage
+    }
+    deals_b = [make_deal("Maxi", "beef"), make_deal("Maxi", "onion")]
+    raw_b = {
+        "id": 11, "title": "Complex Beef Stew", "image": "",
+        "usedIngredients": [{"name": "beef"}, {"name": "onion"}],
+        "missedIngredients": [{"name": x} for x in ["wine", "herbs", "carrots", "stock", "bay leaf", "flour", "butter", "tomato paste"]],  # 2/10 = 20%
+    }
+    all_deals = deals_a + deals_b
+    score_a, _ = _score_recipe(raw_a, all_deals)
+    score_b, _ = _score_recipe(raw_b, all_deals)
+    assert score_a > score_b
+
+
+def test_score_recipe_deduplicates_matched_deals():
+    """Multiple deals matching the same ingredient should only produce one entry."""
+    deals = [
+        make_deal("Maxi", "chicken breast", sale=7.99, orig=12.99),
+        make_deal("Maxi", "chicken thighs", sale=5.99, orig=9.99),
+        make_deal("Maxi", "chicken wings", sale=9.99, orig=14.99),
+    ]
+    raw = {
+        "id": 3, "title": "Roast Chicken", "image": "",
+        "usedIngredients": [{"name": "chicken"}],
+        "missedIngredients": [],
+    }
+    _, recipe = _score_recipe(raw, deals)
+    # Should only have one deal per ingredient (the best one)
+    assert len(recipe.matched_deals) == 1
 
 
 def test_fetch_recipes_returns_top_10(sample_deals):

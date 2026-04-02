@@ -107,14 +107,20 @@ def extract_ingredient(name: str) -> str:
 def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
     if not deals:
         return []
-    ingredients = list({extract_ingredient(d.name) for d in deals if extract_ingredient(d.name)})[:10]
-    if not ingredients:
+
+    # Use all unique extracted ingredients (not capped at 10) so Spoonacular
+    # has the full picture of what's on sale
+    raw_ingredients = list({extract_ingredient(d.name) for d in deals if extract_ingredient(d.name)})
+    if not raw_ingredients:
         return []
 
     # Translate ingredients to English for Spoonacular API
-    translated_ingredients = [_translate_to_english(ing) for ing in ingredients]
-    if any(ing != trans for ing, trans in zip(ingredients, translated_ingredients)):
-        log.info("Translated ingredients from French: %s -> %s", ingredients, translated_ingredients)
+    translated_ingredients = list({_translate_to_english(ing) for ing in raw_ingredients if _translate_to_english(ing)})
+    if any(ing != trans for ing, trans in zip(raw_ingredients, translated_ingredients)):
+        log.info("Translated %d ingredients from French to English", len(raw_ingredients))
+
+    # Spoonacular findByIngredients caps at 100 ingredients max
+    translated_ingredients = translated_ingredients[:100]
 
     resp = requests.get(
         SPOONACULAR_URL,
@@ -149,28 +155,58 @@ def _is_meal_recipe(raw: dict) -> bool:
 
 def _score_recipe(raw: dict, deals: list[Deal]) -> tuple[float, Recipe]:
     used_ingredients = raw.get("usedIngredients", [])
-    used_names = {i["name"].lower() for i in used_ingredients}
+    missed_ingredients = raw.get("missedIngredients", [])
+    total_ingredients = len(used_ingredients) + len(missed_ingredients)
 
-    # Match deals: check if any ingredient word appears in deal name
-    matched = []
-    for deal in deals:
-        deal_text = f"{deal.name} {deal.description}".lower()
-        # Check if any ingredient appears in the deal text
-        if any(_ingredient_matches(u, deal_text) for u in used_names):
-            matched.append(deal)
+    # For each used ingredient, find the single best matching deal
+    # (highest discount, or lowest price if no discount). This prevents
+    # one ingredient from inflating the list with duplicate deal entries.
+    matched_deals: list[Deal] = []
+    for ingredient in used_ingredients:
+        ing_name = ingredient["name"].lower()
+        best_deal = _best_matching_deal(ing_name, deals)
+        if best_deal is not None:
+            matched_deals.append(best_deal)
 
-    maxi_count = sum(1 for d in matched if d.store == "Maxi")
-    stores = {d.store for d in matched}
-    score = len(matched) * 10 - len(stores) * 5 + maxi_count * 3
+    # Deduplicate deals — the same deal can match multiple ingredients
+    seen_ids = set()
+    unique_deals: list[Deal] = []
+    for d in matched_deals:
+        key = (d.store, d.name, d.sale_price)
+        if key not in seen_ids:
+            seen_ids.add(key)
+            unique_deals.append(d)
+
+    # Coverage-based scoring: what fraction of the recipe's ingredients are on sale?
+    # A recipe where 8/10 ingredients are on sale beats one where 2/4 are.
+    coverage = len(unique_deals) / total_ingredients if total_ingredients else 0
+    maxi_count = sum(1 for d in unique_deals if d.store == "Maxi")
+    stores = {d.store for d in unique_deals}
+    store_penalty = (len(stores) - 1) * 5 if stores else 0
+
+    score = coverage * 100 + maxi_count * 3 - store_penalty
+
     recipe_id = raw["id"]
     slug = raw["title"].lower().replace(" ", "-")
     return score, Recipe(
         name=raw["title"],
         url=f"https://spoonacular.com/recipes/{slug}-{recipe_id}",
         image_url=raw.get("image", ""),
-        matched_deals=matched,
+        matched_deals=unique_deals,
         store_count=len(stores),
     )
+
+
+def _best_matching_deal(ingredient: str, deals: list[Deal]) -> Deal | None:
+    """Return the best deal (highest discount) matching an ingredient, or None."""
+    candidates = [
+        d for d in deals
+        if _ingredient_matches(ingredient, f"{d.name} {d.description}".lower())
+    ]
+    if not candidates:
+        return None
+    # Prefer deals with a discount; among those, pick highest discount
+    return max(candidates, key=lambda d: d.discount_pct or 0)
 
 
 def _ingredient_matches(ingredient: str, deal_text: str) -> bool:
