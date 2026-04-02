@@ -50,6 +50,15 @@ def _parse_items(store: str, items: list[dict]) -> list[Deal]:
         # Get valid_until date (new format uses valid_to_timestamp, old uses valid_to)
         valid_until = item.get("valid_to") or item.get("valid_to_timestamp")
 
+        # Get image URL (try multiple possible field names)
+        image_url = (
+            item.get("image_url")
+            or item.get("image")
+            or item.get("image_link")
+            or item.get("logo")
+            or ""
+        )
+
         deals.append(
             Deal(
                 store=store,
@@ -59,6 +68,7 @@ def _parse_items(store: str, items: list[dict]) -> list[Deal]:
                 original_price=original_price,
                 discount_pct=discount_pct,
                 valid_until=valid_until,
+                image_url=image_url,
             )
         )
     return deals

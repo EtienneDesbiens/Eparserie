@@ -11,6 +11,7 @@ class Deal:
     original_price: float | None
     discount_pct: float | None
     valid_until: str | None
+    image_url: str = ""
 
 
 @dataclass
