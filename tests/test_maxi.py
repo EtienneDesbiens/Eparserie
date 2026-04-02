@@ -1,6 +1,7 @@
 """Tests for the Maxi HTTP scraper."""
 import pytest
 from unittest.mock import patch, MagicMock
+from models import Deal
 from scrapers.maxi import fetch_maxi_deals, _get_maxi_publications, _get_products
 
 
@@ -134,8 +135,10 @@ def test_fetch_maxi_deals_parses_price_text_format():
 def test_fetch_maxi_deals_raises_when_no_publications_found():
     pub_resp = _mock_json_response([{"id": 3001, "merchant_name": "IGA"}])
     with patch("scrapers.maxi.requests.get", return_value=pub_resp):
-        with pytest.raises(RuntimeError, match="No Maxi publications found"):
-            fetch_maxi_deals()
+        with patch("scrapers.maxi._fetch_maxi_playwright",
+                   side_effect=RuntimeError("No Flipp widget data")):
+            with pytest.raises(RuntimeError):
+                fetch_maxi_deals()
 
 
 def test_fetch_maxi_deals_uses_env_postal_code(monkeypatch):
@@ -162,3 +165,21 @@ def test_fetch_maxi_deals_default_postal_code(monkeypatch):
 
     first_call_kwargs = mock_get.call_args_list[0]
     assert first_call_kwargs[1]["params"]["postal_code"] == "H2X2X3"
+
+
+def test_fetch_maxi_deals_falls_back_to_playwright_on_http_failure():
+    """When HTTP API is blocked, headed browser fallback is used."""
+    # HTTP call returns HTML (blocked)
+    blocked_resp = _mock_json_response({}, content_type="text/html")
+
+    with patch("scrapers.maxi.requests.get", return_value=blocked_resp):
+        with patch(
+            "scrapers.maxi._fetch_maxi_playwright",
+            return_value=[Deal("Maxi", "Chicken", "1kg", 8.99, 13.99, 35.7, None)],
+        ) as mock_pw:
+            deals = fetch_maxi_deals()
+
+    mock_pw.assert_called_once()
+    assert len(deals) == 1
+    assert deals[0].store == "Maxi"
+    assert deals[0].name == "Chicken"
