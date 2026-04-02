@@ -60,11 +60,13 @@ Test configuration is in `pytest.ini`.
 
 **GroceryBot** is a daily deal aggregator that scrapes grocery stores and matches them to recipes:
 
-1. **Direct Store Scrapers** (`scrapers/maxi.py`, `metro.py`, `iga.py`, `provigo.py`) — Use Playwright to intercept Flipp widget JSON responses from each store's flyer page
+1. **Flipp-based Scrapers** — Leverage Flipp's commercial flyer system (used by Maxi, Metro, IGA, Provigo)
+   - **Maxi** (`scrapers/maxi.py`) — HTTP scraper: calls Flipp publications API for Maxi's ID, then fetches items directly from `dam.flippenterprise.net` (bypasses Forter)
+   - **IGA/Metro/Provigo** (`scrapers/iga.py`, `metro.py`, `provigo.py`) — Use Playwright to intercept Flipp widget responses from store pages
    - **Shared Infrastructure** (`scrapers/store_flyer.py`, `scrapers/utils.py`) — Playwright network interception and deal parsing
 2. **Costco Playwright Scraper** (`scrapers/costco.py`) — Uses headless browser automation to scrape Costco's savings centre
 3. **Recipe Finder** (`recipes.py`) — Extracts ingredients from deal names, queries Spoonacular API, and scores recipes by Maxi-priority and store-count minimization
-4. **Email Renderer** (`email_sender.py`, `templates/email.html`) — Builds an HTML digest with recipes and deals organized by store
+4. **Email Renderer** (`email_sender.py`, `templates/email.html`) — Builds an HTML digest with recipes and deals organized by store (10 recipes per email)
 5. **Main Orchestrator** (`main.py`) — Coordinates all scrapers with independent error isolation (one scraper's failure doesn't block others), sorts deals, trims to max per store, and sends email via Mailersend SMTP
 
 Data Models:
@@ -72,13 +74,17 @@ Data Models:
 - `Recipe` — Name, URL, image, matched deals, store count
 - `Config` — Loads all credentials/settings from `.env`
 
-**Why Direct Store Scraping?**
+**Why Multiple Scraping Approaches?**
 
-Each store (Maxi, Metro, IGA, Provigo) embeds Flipp's commercial flyer widget which calls `dam.flippenterprise.net/flyerkit/publication/{id}/products` to fetch deal JSON. We intercept these network responses using Playwright's response listener, capturing structured JSON without relying on fragile HTML selectors.
+Different stores have different antibot protection levels:
+- **Maxi:** Uses Forter fraud detection which blocks Playwright entirely. HTTP API approach gets the publication ID from Flipp's public API, then fetches items directly from the CDN — Forter-free.
+- **IGA:** No Forter protection; Flipp widget loads normally; Playwright intercepts widget responses successfully.
+- **Metro/Provigo:** Have Forter protection (like Maxi), but their upstream APIs are also blocked. Fallback to demo data.
 
 **Current Status:**
-- ✅ **IGA:** Successfully captures and parses ~313 deals per run
-- ❌ **Maxi, Metro, Provigo:** Blocked by Forter fraud detection (sophisticated antibot system that detects and blocks headless browsers)
+- ✅ **IGA:** Successfully captures and parses ~313 deals per run via Playwright network interception
+- ⚠️ **Maxi:** HTTP scraper implemented and tested, but upstream Flipp API also blocked (returns HTML)
+- ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection)
 
 The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function.
 
