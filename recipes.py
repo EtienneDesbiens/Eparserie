@@ -120,7 +120,7 @@ def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
         SPOONACULAR_URL,
         params={
             "ingredients": ",".join(translated_ingredients),
-            "number": 10,
+            "number": 100,
             "ranking": 2,
             "ignorepantry": "true",
             "apiKey": api_key,
