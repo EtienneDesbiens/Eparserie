@@ -7,3 +7,6 @@ grocerybot.log
 .claude/
 docs/
 browser_profiles/
+gmail_credentials*.json
+*_credentials.json
+token*.json
