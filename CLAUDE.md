@@ -73,7 +73,13 @@ Data Models:
 
 **Why Direct Store Scraping?**
 
-Each store (Maxi, Metro, IGA, Provigo) embeds Flipp's commercial flyer widget which calls `cdn.flipp.com/flyerkit/publications/{id}/items` to fetch deal JSON. We intercept these network responses using Playwright's response listener, capturing structured JSON without relying on fragile HTML selectors.
+Each store (Maxi, Metro, IGA, Provigo) embeds Flipp's commercial flyer widget which calls `dam.flippenterprise.net/flyerkit/publication/{id}/products` to fetch deal JSON. We intercept these network responses using Playwright's response listener, capturing structured JSON without relying on fragile HTML selectors.
+
+**Current Status:**
+- ✅ **IGA:** Successfully captures and parses ~313 deals per run
+- ❌ **Maxi, Metro, Provigo:** Blocked by Forter fraud detection (sophisticated antibot system that detects and blocks headless browsers)
+
+The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function.
 
 ## Running the Bot
 
