@@ -53,7 +53,7 @@ def test_score_recipe_penalizes_multiple_stores():
     assert recipe.store_count == 2
 
 
-def test_fetch_recipes_returns_top_3(sample_deals):
+def test_fetch_recipes_returns_top_10(sample_deals):
     fake_response = [
         {"id": i, "title": f"Recipe {i}", "image": "",
          "usedIngredients": [{"name": "beef"}], "missedIngredients": []}
@@ -64,7 +64,7 @@ def test_fetch_recipes_returns_top_3(sample_deals):
     mock_resp.raise_for_status = MagicMock()
     with patch("recipes.requests.get", return_value=mock_resp):
         results = fetch_recipes(sample_deals, "fake-key")
-    assert len(results) == 3
+    assert len(results) == 10
 
 
 def test_fetch_recipes_empty_deals():

@@ -36,7 +36,7 @@ def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
     resp.raise_for_status()
     scored = [_score_recipe(r, deals) for r in resp.json()]
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [recipe for _, recipe in scored[:3]]
+    return [recipe for _, recipe in scored[:10]]
 
 
 def _score_recipe(raw: dict, deals: list[Deal]) -> tuple[float, Recipe]:
