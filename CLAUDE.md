@@ -18,7 +18,8 @@ pip install -r requirements.txt
 ### Configure Environment
 Copy `.env.example` to `.env` and fill in:
 - `POSTAL_CODE` — Canadian postal code for store location filtering
-- `MAILERSEND_EMAIL` and `MAILERSEND_API_KEY` — Mailersend SMTP credentials for sending deal notifications
+- `MAILERSEND_EMAIL` — Mailersend SMTP username (from Settings → SMTP)
+- `MAILERSEND_API_KEY` — Mailersend SMTP password (from Settings → SMTP)
 - `EMAIL_FROM` — From address for emails (e.g., noreply@grocerybot.local)
 - `EMAIL_RECIPIENT` — Where to send deal alerts
 - `SPOONACULAR_API_KEY` — API key for ingredient/recipe data
@@ -85,38 +86,70 @@ The system gracefully falls back to demo data when real scraping fails, ensuring
 
 ### Setup: Mailersend SMTP
 
-**One-time setup (2 minutes):**
-1. Sign up (free): https://www.mailersend.com/
-2. Go to Settings → SMTP & API or API Tokens
-3. Get your credentials:
-   - SMTP Host: `smtp.mailersend.net`
-   - Port: `587`
-   - Email: your-mailersend-email@example.com
-   - SMTP Password: your API token (or SMTP password from settings)
-4. Add to `.env`:
+**One-time setup (5 minutes):**
+
+1. **Create a Mailersend account** (free): https://www.mailersend.com/
+   - Sign up and verify your email
+
+2. **Add a sender domain:**
+   - Go to Senders & Domains → Domains
+   - Click "Add Domain"
+   - Enter a domain you own (e.g., `grocerybot.example.com`)
+   - Follow DNS verification steps
+   - **Alternative:** Use Mailersend's test domain `trial-z9md6ol9rp5k78.mlsnd.net` for testing
+
+3. **Get SMTP credentials:**
+   - Go to Settings → SMTP
+   - You'll see:
+     - SMTP Host: `smtp.mailersend.net`
+     - SMTP Port: `587`
+     - SMTP Username: (usually your email or a generated username)
+     - SMTP Password: (generate one or use your account password)
+   - Copy these credentials
+
+4. **Configure `.env` file:**
+   ```bash
+   cp .env.example .env
    ```
-   MAILERSEND_EMAIL=your-mailersend-email@example.com
-   MAILERSEND_API_KEY=your_api_token_or_smtp_password
+   
+   Then edit `.env` and fill in:
+   ```
+   POSTAL_CODE=J1H2B4
    EMAIL_FROM=noreply@grocerybot.local
-   EMAIL_RECIPIENT=your-email@example.com
+   EMAIL_RECIPIENT=your-personal-email@gmail.com
+   MAILERSEND_EMAIL=your-smtp-username
+   MAILERSEND_API_KEY=your-smtp-password
+   SPOONACULAR_API_KEY=your_spoonacular_api_key
+   MAX_DEALS_PER_STORE=10
    ```
 
-**Run:**
-```bash
-cp .env.example .env  # Fill in Mailersend credentials
-pip install -r requirements.txt
-python main.py
-```
+5. **Install dependencies and run:**
+   ```bash
+   pip install -r requirements.txt
+   python main.py
+   ```
 
-**Check emails:** Go to https://www.mailersend.com/ → Activity to see sent emails
+6. **Verify emails were sent:**
+   - Go to https://www.mailersend.com/ → Activity/Dashboard
+   - Look for sent emails in the log
+
+### Mailersend SMTP Credentials Reference
+
+| Credential | Value |
+|---|---|
+| SMTP Host | `smtp.mailersend.net` |
+| SMTP Port | `587` |
+| TLS | Required |
+| Username | (from Mailersend Settings → SMTP) |
+| Password | (SMTP password from Mailersend Settings) |
 
 ### Why Mailersend?
 
-✅ **Simple SMTP auth** — just email + API token
+✅ **Simple SMTP auth** — username + password, no OAuth
 ✅ **Free tier** — 1000 emails/month (plenty for daily runs)
-✅ **Real emails** — reaches actual inboxes
-✅ **Production ready** — reliable email delivery service
-✅ **Easy setup** — no OAuth complexity
+✅ **Real emails** — reaches actual inboxes, professional delivery
+✅ **Production ready** — trusted by many projects
+✅ **Easy setup** — 5 minutes to get credentials
 
 ### Scheduling
 
