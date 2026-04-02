@@ -90,18 +90,25 @@ def test_score_recipe_deduplicates_matched_deals():
     assert len(recipe.matched_deals) == 1
 
 
-def test_fetch_recipes_returns_top_10(sample_deals):
-    fake_response = [
-        {"id": i, "title": f"Recipe {i}", "image": "",
-         "usedIngredients": [{"name": "beef"}], "missedIngredients": []}
-        for i in range(10)
-    ]
-    mock_resp = MagicMock()
-    mock_resp.json.return_value = fake_response
-    mock_resp.raise_for_status = MagicMock()
-    with patch("recipes.requests.get", return_value=mock_resp):
+def test_fetch_recipes_returns_top_5(sample_deals):
+    # Simulate 5 API calls each returning 20 unique recipes (100 total candidates)
+    call_count = 0
+    def fake_get(*args, **kwargs):
+        nonlocal call_count
+        offset = call_count * 20
+        call_count += 1
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status = MagicMock()
+        mock_resp.json.return_value = [
+            {"id": offset + i, "title": f"Recipe {offset + i}", "image": "",
+             "usedIngredients": [{"name": "beef"}], "missedIngredients": []}
+            for i in range(20)
+        ]
+        return mock_resp
+
+    with patch("recipes.requests.get", side_effect=fake_get):
         results = fetch_recipes(sample_deals, "fake-key")
-    assert len(results) == 10
+    assert len(results) == 5
 
 
 def test_fetch_recipes_empty_deals():

@@ -49,39 +49,65 @@ def extract_ingredient(name: str) -> str:
     return " ".join(words[:3]).strip().lower()
 
 
+_NUM_API_CALLS = 5
+_RESULTS_PER_CALL = 20
+_TOP_N_RECIPES = 5
+
+
 def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
     if not deals:
         return []
 
-    # Use all unique extracted ingredients (not capped at 10) so Spoonacular
-    # has the full picture of what's on sale
     raw_ingredients = list({extract_ingredient(d.name) for d in deals if extract_ingredient(d.name)})
     if not raw_ingredients:
         return []
 
-    # Translate ingredients to English for Spoonacular API
+    # Translate all ingredients to English
     translated_ingredients = list({_translate_to_english(ing) for ing in raw_ingredients if _translate_to_english(ing)})
-    if any(ing != trans for ing, trans in zip(raw_ingredients, translated_ingredients)):
-        log.info("Translated %d ingredients from French to English", len(raw_ingredients))
+    log.info("Sending %d unique ingredients to Spoonacular", len(translated_ingredients))
 
-    # Spoonacular findByIngredients caps at 100 ingredients max
-    translated_ingredients = translated_ingredients[:100]
+    # Split ingredients into _NUM_API_CALLS batches and query each separately.
+    # Different ingredient subsets return different recipe candidates, giving a
+    # larger and more varied pool to rank from.
+    batch_size = max(1, len(translated_ingredients) // _NUM_API_CALLS)
+    batches = [
+        translated_ingredients[i: i + batch_size]
+        for i in range(0, len(translated_ingredients), batch_size)
+    ]
+    # Cap at _NUM_API_CALLS batches (last extra batch gets merged into the final one)
+    if len(batches) > _NUM_API_CALLS:
+        batches[_NUM_API_CALLS - 1].extend(batches[_NUM_API_CALLS])
+        batches = batches[:_NUM_API_CALLS]
 
-    resp = requests.get(
-        SPOONACULAR_URL,
-        params={
-            "ingredients": ",".join(translated_ingredients),
-            "number": 100,
-            "ranking": 2,
-            "ignorepantry": "true",
-            "apiKey": api_key,
-        },
-        timeout=10,
-    )
-    resp.raise_for_status()
-    scored = [_score_recipe(r, deals) for r in resp.json() if _is_meal_recipe(r)]
+    # Collect raw results, deduplicating by recipe ID across all calls
+    seen_ids: set[int] = set()
+    all_raw: list[dict] = []
+    for i, batch in enumerate(batches):
+        try:
+            resp = requests.get(
+                SPOONACULAR_URL,
+                params={
+                    "ingredients": ",".join(batch),
+                    "number": _RESULTS_PER_CALL,
+                    "ranking": 2,
+                    "ignorepantry": "true",
+                    "apiKey": api_key,
+                },
+                timeout=10,
+            )
+            resp.raise_for_status()
+            for recipe in resp.json():
+                if recipe["id"] not in seen_ids:
+                    seen_ids.add(recipe["id"])
+                    all_raw.append(recipe)
+            log.info("Spoonacular call %d/%d: %d new recipes", i + 1, len(batches), len(resp.json()))
+        except Exception as e:
+            log.warning("Spoonacular call %d/%d failed: %s", i + 1, len(batches), e)
+
+    log.info("Total unique recipes from Spoonacular: %d", len(all_raw))
+    scored = [_score_recipe(r, deals) for r in all_raw if _is_meal_recipe(r)]
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [recipe for _, recipe in scored[:10]]
+    return [recipe for _, recipe in scored[:_TOP_N_RECIPES]]
 
 
 def _is_meal_recipe(raw: dict) -> bool:
