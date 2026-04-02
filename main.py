@@ -29,6 +29,11 @@ def _is_food_item(deal: Deal) -> bool:
     return not any(keyword in text for keyword in NON_FOOD_KEYWORDS)
 
 
+def _is_reasonable_price(deal: Deal, max_price: float = 50.0) -> bool:
+    """Filter out items over a reasonable price threshold."""
+    return deal.sale_price <= max_price
+
+
 def run() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -63,7 +68,12 @@ def run() -> None:
     # Filter to food items only
     food_deals = [d for d in all_deals if _is_food_item(d)]
     log.info("Filtered to %d food items (removed %d non-food)", len(food_deals), len(all_deals) - len(food_deals))
-    all_deals = food_deals
+
+    # Filter to reasonable prices (under $50)
+    priced_deals = [d for d in food_deals if _is_reasonable_price(d)]
+    log.info("Filtered to %d reasonably priced items (removed %d over $50)", len(priced_deals), len(food_deals) - len(priced_deals))
+
+    all_deals = priced_deals
 
     # Sort: Maxi first, then alphabetical; within each store sort by discount desc (None last)
     all_deals.sort(key=lambda d: (
