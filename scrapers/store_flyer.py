@@ -88,11 +88,9 @@ def fetch_store_deals(store: str) -> list[Deal]:
 
     log.info(f"Captured {len(captured)} raw items from {store}")
 
-    # Debug: log Flipp URLs seen
+    # Debug: log if Flipp widget was found
     if flipp_urls_seen:
-        log.info(f"{store}: {len(flipp_urls_seen)} Flipp URLs seen. Sample: {flipp_urls_seen[0] if flipp_urls_seen else 'none'}")
-    else:
-        log.info(f"{store}: No Flipp URLs intercepted")
+        log.debug(f"{store}: Flipp widget loaded ({len(flipp_urls_seen)} requests)")
 
     if not captured:
         raise RuntimeError(f"No Flipp widget data captured from {store}")
