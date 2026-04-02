@@ -42,8 +42,15 @@ def fetch_store_deals(store: str) -> list[Deal]:
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
 
+            # Track any Flipp-related requests for debugging
+            flipp_urls_seen = []
+
             # Intercept responses from Flipp widget's endpoints
             def on_response(response):
+                # Track Flipp requests for debugging
+                if "flippenterprise.net" in response.url or "flyerkit" in response.url:
+                    flipp_urls_seen.append(response.url)
+
                 # Check for Flipp products endpoint (dam.flippenterprise.net/flyerkit/publication/{id}/products)
                 if "dam.flippenterprise.net" in response.url and "/flyerkit/publication/" in response.url and "/products" in response.url:
                     try:
@@ -65,8 +72,14 @@ def fetch_store_deals(store: str) -> list[Deal]:
             page.on("response", on_response)
             # Use domcontentloaded instead of networkidle to avoid timeouts from tracking scripts
             page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-            # Wait a moment for async widget to load and make its network request
+            # Wait for async widget to load and make its network request
             page.wait_for_timeout(3_000)
+            # Try scrolling to trigger lazy-loaded content
+            try:
+                page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+                page.wait_for_timeout(2_000)
+            except Exception:
+                pass
             browser.close()
 
     except Exception as e:
@@ -74,6 +87,12 @@ def fetch_store_deals(store: str) -> list[Deal]:
         raise RuntimeError(f"Failed to load {store} flyer page: {e}")
 
     log.info(f"Captured {len(captured)} raw items from {store}")
+
+    # Debug: log Flipp URLs seen
+    if flipp_urls_seen:
+        log.info(f"{store}: {len(flipp_urls_seen)} Flipp URLs seen. Sample: {flipp_urls_seen[0] if flipp_urls_seen else 'none'}")
+    else:
+        log.info(f"{store}: No Flipp URLs intercepted")
 
     if not captured:
         raise RuntimeError(f"No Flipp widget data captured from {store}")
