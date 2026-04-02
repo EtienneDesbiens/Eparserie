@@ -68,11 +68,13 @@ def _fetch_maxi_playwright() -> list[Deal]:
         page = context.new_page()
 
         def on_response(response):
-            # Track all Flipp-related URLs for debugging
-            if "flipp" in response.url.lower():
+            # Track all Flipp-related URLs
+            url_lower = response.url.lower()
+            if "flipp" in url_lower:
                 urls_seen.append(response.url)
-                log.debug("Maxi headed: Flipp URL: %s", response.url[:100])
+                log.info("Maxi headed: Flipp URL: %s", response.url[:120])
 
+            # Try standard Flipp endpoint first
             if (
                 "dam.flippenterprise.net" in response.url
                 and "/flyerkit/publication/" in response.url
@@ -86,17 +88,57 @@ def _fetch_maxi_playwright() -> list[Deal]:
                         captured.extend(items)
                 except Exception as e:
                     log.debug("Maxi headed: Failed to parse Flipp response: %s", e)
+                return
+
+            # Try Loblaws assets API (Maxi's alternative endpoint)
+            if "assets.loblaws.ca" in response.url:
+                log.debug("Maxi headed: Found assets.loblaws.ca request: %s", response.url[:100])
+                try:
+                    data = response.json()
+                    # Log the structure so we can understand the format
+                    if isinstance(data, dict):
+                        keys = list(data.keys())
+                        log.info("Maxi headed: assets.loblaws.ca response keys: %s", keys[:10])
+
+                        # Try different possible structures
+                        items = None
+                        if "items" in data:
+                            items = data["items"]
+                        elif "products" in data:
+                            items = data["products"]
+                        elif "data" in data:
+                            # Check if data contains items
+                            if isinstance(data["data"], dict):
+                                if "items" in data["data"]:
+                                    items = data["data"]["items"]
+                                elif "products" in data["data"]:
+                                    items = data["data"]["products"]
+                            elif isinstance(data["data"], list):
+                                items = data["data"]
+
+                        if items and isinstance(items, list) and len(items) > 0:
+                            log.info("Maxi: captured %d items from Loblaws API", len(items))
+                            # Check structure of first item
+                            first_item = items[0]
+                            if isinstance(first_item, dict):
+                                log.info("Maxi: first item keys: %s", list(first_item.keys())[:15])
+                            captured.extend(items)
+                    elif isinstance(data, list):
+                        log.info("Maxi: assets.loblaws.ca returned list with %d items", len(data))
+                        captured.extend(data)
+                except Exception as e:
+                    log.debug("Maxi headed: Failed to parse Loblaws response: %s", e)
 
         page.on("response", on_response)
         try:
-            page.goto(MAXI_URL, wait_until="domcontentloaded", timeout=30_000)
+            page.goto(MAXI_URL, wait_until="networkidle", timeout=60_000)
         except Exception as e:
-            log.error("Maxi headed: Failed to load page: %s", e)
+            log.warning("Maxi headed: networkidle timeout (OK, page still loaded): %s", str(e)[:50])
 
-        page.wait_for_timeout(5_000)
+        page.wait_for_timeout(3_000)
         try:
             page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
-            page.wait_for_timeout(2_000)
+            page.wait_for_timeout(3_000)
         except Exception:
             pass
 
@@ -104,9 +146,9 @@ def _fetch_maxi_playwright() -> list[Deal]:
 
     # Debug: log what we saw
     if urls_seen:
-        log.info("Maxi headed: Saw %d Flipp requests", len(urls_seen))
+        log.info("Maxi headed: Saw %d Flipp/Loblaws requests", len(urls_seen))
     else:
-        log.warning("Maxi headed: No Flipp requests intercepted")
+        log.warning("Maxi headed: No Flipp/Loblaws requests intercepted")
 
     if not captured:
         raise RuntimeError("No Flipp widget data captured from Maxi (headed browser)")
