@@ -87,11 +87,12 @@ Different stores have different antibot protection levels:
 - ✅ **IGA:** Successfully captures and parses ~313 deals per run via Playwright network interception
 - ⚠️ **Maxi:** 
   - HTTP API blocked (returns HTML)
-  - Headed browser fallback implemented & tested; will work over time as persistent profile builds trust
-  - Persistent profile (`browser_profiles/maxi/`) stores cookies/session — Forter session trust builds across runs
+  - Headed browser fallback implemented; successfully loads page without Forter blocking
+  - Challenge: Maxi uses proprietary Loblaws JavaScript to dynamically load deal data (not via interceptable HTTP API)
+  - Requires either: reverse-engineering Loblaws API, DOM parsing, or access to undocumented endpoints
 - ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection); would need similar headed browser approach
 
-The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function. Maxi's headed browser approach should eventually work as the persistent profile gains trust from Forter's reputation system.
+The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function reliably. With 313 deals/run from IGA and robust fallback behavior, the system delivers value despite Forter antibot protections.
 
 ## Running the Bot
 
