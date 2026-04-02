@@ -33,8 +33,8 @@ def test_render_email_shows_discount(sample_deals, sample_recipe):
     assert "-38%" in html  # maxi_deal has 38.5% → int = 38
 
 
-def test_send_email_brevo(sample_deals, sample_recipe):
-    """Test that Brevo SMTP is called correctly."""
+def test_send_email_mailersend(sample_deals, sample_recipe):
+    """Test that Mailersend SMTP is called correctly."""
     html = render_email(sample_deals, [sample_recipe], [])
 
     with patch("email_sender.smtplib.SMTP") as MockSMTP:
@@ -44,8 +44,8 @@ def test_send_email_brevo(sample_deals, sample_recipe):
 
         send_email(html, "noreply@grocerybot.local", "user@example.com", "api_key", "recipient@example.com")
 
-    # Verify Brevo SMTP server was used
-    MockSMTP.assert_called_once_with("smtp-relay.brevo.com", 587)
+    # Verify Mailersend SMTP server was used
+    MockSMTP.assert_called_once_with("smtp.mailersend.net", 587)
     mock_instance.starttls.assert_called_once()
     mock_instance.login.assert_called_once_with("user@example.com", "api_key")
     mock_instance.sendmail.assert_called_once()

@@ -18,7 +18,7 @@ pip install -r requirements.txt
 ### Configure Environment
 Copy `.env.example` to `.env` and fill in:
 - `POSTAL_CODE` — Canadian postal code for store location filtering
-- `BREVO_EMAIL` and `BREVO_API_KEY` — Brevo SMTP credentials for sending deal notifications
+- `MAILERSEND_EMAIL` and `MAILERSEND_API_KEY` — Mailersend SMTP credentials for sending deal notifications
 - `EMAIL_FROM` — From address for emails (e.g., noreply@grocerybot.local)
 - `EMAIL_RECIPIENT` — Where to send deal alerts
 - `SPOONACULAR_API_KEY` — API key for ingredient/recipe data
@@ -64,7 +64,7 @@ Test configuration is in `pytest.ini`.
 2. **Costco Playwright Scraper** (`scrapers/costco.py`) — Uses headless browser automation to scrape Costco's savings centre
 3. **Recipe Finder** (`recipes.py`) — Extracts ingredients from deal names, queries Spoonacular API, and scores recipes by Maxi-priority and store-count minimization
 4. **Email Renderer** (`email_sender.py`, `templates/email.html`) — Builds an HTML digest with recipes and deals organized by store
-5. **Main Orchestrator** (`main.py`) — Coordinates all scrapers with independent error isolation (one scraper's failure doesn't block others), sorts deals, trims to max per store, and sends email via Brevo SMTP
+5. **Main Orchestrator** (`main.py`) — Coordinates all scrapers with independent error isolation (one scraper's failure doesn't block others), sorts deals, trims to max per store, and sends email via Mailersend SMTP
 
 Data Models:
 - `Deal` — Store, name, description, prices, discount %, valid_until date
@@ -83,39 +83,40 @@ The system gracefully falls back to demo data when real scraping fails, ensuring
 
 ## Running the Bot
 
-### Setup: Brevo SMTP (Simple, No OAuth)
+### Setup: Mailersend SMTP
 
 **One-time setup (2 minutes):**
-1. Sign up (free): https://www.brevo.com/
-2. Go to Settings → SMTP & API
-3. Copy your credentials:
-   - SMTP Host: `smtp-relay.brevo.com`
-   - Email: your-email@example.com
-   - SMTP Password: (from Settings)
+1. Sign up (free): https://www.mailersend.com/
+2. Go to Settings → SMTP & API or API Tokens
+3. Get your credentials:
+   - SMTP Host: `smtp.mailersend.net`
+   - Port: `587`
+   - Email: your-mailersend-email@example.com
+   - SMTP Password: your API token (or SMTP password from settings)
 4. Add to `.env`:
    ```
-   BREVO_EMAIL=your-email@example.com
-   BREVO_API_KEY=your_smtp_password
+   MAILERSEND_EMAIL=your-mailersend-email@example.com
+   MAILERSEND_API_KEY=your_api_token_or_smtp_password
    EMAIL_FROM=noreply@grocerybot.local
    EMAIL_RECIPIENT=your-email@example.com
    ```
 
 **Run:**
 ```bash
-cp .env.example .env  # Fill in Brevo credentials
+cp .env.example .env  # Fill in Mailersend credentials
 pip install -r requirements.txt
 python main.py
 ```
 
-**Check emails:** Go to https://www.brevo.com/ → Transactional to see sent emails
+**Check emails:** Go to https://www.mailersend.com/ → Activity to see sent emails
 
-### Why Brevo?
+### Why Mailersend?
 
-✅ **No OAuth complexity** — just email + password
-✅ **Free tier** — 300 emails/day (plenty for daily runs)
-✅ **Real emails** — reaches actual inboxes, not a testing service
-✅ **Production ready** — used by thousands of companies
-✅ **Professional delivery** — better than Mailtrap for real use
+✅ **Simple SMTP auth** — just email + API token
+✅ **Free tier** — 1000 emails/month (plenty for daily runs)
+✅ **Real emails** — reaches actual inboxes
+✅ **Production ready** — reliable email delivery service
+✅ **Easy setup** — no OAuth complexity
 
 ### Scheduling
 

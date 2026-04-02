@@ -47,12 +47,12 @@ def render_email(
 def send_email(
     html: str,
     email_from: str,
-    brevo_email: str,
-    brevo_api_key: str,
+    mailersend_email: str,
+    mailersend_api_key: str,
     email_recipient: str,
 ) -> None:
     """
-    Send email via Brevo SMTP (simple, no OAuth needed).
+    Send email via Mailersend SMTP.
     """
     subject = f"\U0001f6d2 Weekly Grocery Deals \u2014 {date.today().strftime('%B %d, %Y')}"
 
@@ -66,10 +66,10 @@ def send_email(
     # HTML version
     msg.attach(MIMEText(html, "html"))
 
-    # Send via Brevo SMTP
-    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+    # Send via Mailersend SMTP
+    with smtplib.SMTP("smtp.mailersend.net", 587) as server:
         server.starttls()
-        server.login(brevo_email, brevo_api_key)
+        server.login(mailersend_email, mailersend_api_key)
         server.sendmail(email_from, email_recipient, msg.as_string())
 
-    print(f"Email sent successfully to {email_recipient} via Brevo")
+    print(f"Email sent successfully to {email_recipient} via Mailersend")

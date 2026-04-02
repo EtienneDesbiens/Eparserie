@@ -73,7 +73,7 @@ def run() -> None:
             log.error("Recipe fetch failed: %s", exc)
 
     html = render_email(trimmed, recipes, failed_stores)
-    send_email(html, config.email_from, config.brevo_email, config.brevo_api_key, config.email_recipient)
+    send_email(html, config.email_from, config.mailersend_email, config.mailersend_api_key, config.email_recipient)
     log.info("Email sent successfully")
 
 

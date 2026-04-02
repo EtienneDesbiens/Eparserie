@@ -25,7 +25,7 @@ PROVIGO_DEALS = []
 def test_run_happy_path(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",
+        email_from="noreply@grocerybot.local", mailersend_email="user@example.com", mailersend_api_key="pw",
         email_recipient="b@example.com", max_deals_per_store=10,
     )
     from main import run
@@ -49,7 +49,7 @@ def test_run_all_scrapers_fail_uses_demo_data(mock_cfg, mock_maxi, mock_metro, m
     # When all scrapers fail, demo data is used
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",
+        email_from="noreply@grocerybot.local", mailersend_email="user@example.com", mailersend_api_key="pw",
         email_recipient="b@example.com", max_deals_per_store=10,
     )
     from main import run
@@ -71,7 +71,7 @@ def test_run_all_scrapers_fail_uses_demo_data(mock_cfg, mock_maxi, mock_metro, m
 def test_run_respects_max_deals_per_store(mock_cfg, mock_maxi, mock_metro, mock_iga, mock_provigo, mock_recipes, mock_render, mock_send):
     mock_cfg.return_value = MagicMock(
         postal_code="J1H2B4", spoonacular_api_key="key",
-        email_from="noreply@grocerybot.local", brevo_email="user@example.com", brevo_api_key="pw",
+        email_from="noreply@grocerybot.local", mailersend_email="user@example.com", mailersend_api_key="pw",
         email_recipient="b@example.com", max_deals_per_store=5,
     )
     from main import run
