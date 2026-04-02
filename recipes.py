@@ -121,7 +121,7 @@ def fetch_recipes(deals: list[Deal], api_key: str) -> list[Recipe]:
         params={
             "ingredients": ",".join(translated_ingredients),
             "number": 10,
-            "ranking": 1,
+            "ranking": 2,
             "ignorepantry": "true",
             "apiKey": api_key,
         },
