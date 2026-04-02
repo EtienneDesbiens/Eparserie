@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 PUBLICATIONS_URL = "https://flipp.com/api/v2/publications"
 DAM_PRODUCTS_URL = "https://dam.flippenterprise.net/flyerkit/publication/{pub_id}/products"
-MAXI_URL = "https://www.maxi.ca/en/flyer"
+MAXI_URL = "https://www.maxi.ca/en/print-flyer?navid=flyout-L2-Flyer"
 
 # Persistent profile directory — Forter session trust builds over time
 _PROFILE_DIR = str(pathlib.Path(__file__).parent.parent / "browser_profiles" / "maxi")

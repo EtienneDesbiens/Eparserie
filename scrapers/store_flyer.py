@@ -8,7 +8,7 @@ from scrapers.utils import _parse_items
 log = logging.getLogger(__name__)
 
 STORE_URLS = {
-    "Maxi":    "https://www.maxi.ca/en/flyer",
+    "Maxi":    "https://www.maxi.ca/en/print-flyer?navid=flyout-L2-Flyer",
     "Metro":   "https://www.metro.ca/en/flyer",
     "IGA":     "https://www.iga.net/en/flyer",
     "Provigo": "https://www.provigo.ca/en/promotion",
