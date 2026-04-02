@@ -61,8 +61,10 @@ Test configuration is in `pytest.ini`.
 **GroceryBot** is a daily deal aggregator that scrapes grocery stores and matches them to recipes:
 
 1. **Flipp-based Scrapers** — Leverage Flipp's commercial flyer system (used by Maxi, Metro, IGA, Provigo)
-   - **Maxi** (`scrapers/maxi.py`) — HTTP scraper: calls Flipp publications API for Maxi's ID, then fetches items directly from `dam.flippenterprise.net` (bypasses Forter)
-   - **IGA/Metro/Provigo** (`scrapers/iga.py`, `metro.py`, `provigo.py`) — Use Playwright to intercept Flipp widget responses from store pages
+   - **Maxi** (`scrapers/maxi.py`) — Two-tier approach: 
+     1. HTTP scraper (fast) — calls Flipp API for publication IDs, then fetches items directly
+     2. Fallback: headed Playwright with persistent profile (`browser_profiles/maxi/`) — when HTTP is blocked, uses a real browser window that Forter can't detect as headless
+   - **IGA/Metro/Provigo** (`scrapers/iga.py`, `metro.py`, `provigo.py`) — Use headless Playwright to intercept Flipp widget responses from store pages
    - **Shared Infrastructure** (`scrapers/store_flyer.py`, `scrapers/utils.py`) — Playwright network interception and deal parsing
 2. **Costco Playwright Scraper** (`scrapers/costco.py`) — Uses headless browser automation to scrape Costco's savings centre
 3. **Recipe Finder** (`recipes.py`) — Extracts ingredients from deal names, queries Spoonacular API, and scores recipes by Maxi-priority and store-count minimization
@@ -83,10 +85,13 @@ Different stores have different antibot protection levels:
 
 **Current Status:**
 - ✅ **IGA:** Successfully captures and parses ~313 deals per run via Playwright network interception
-- ⚠️ **Maxi:** HTTP scraper implemented and tested, but upstream Flipp API also blocked (returns HTML)
-- ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection)
+- ⚠️ **Maxi:** 
+  - HTTP API blocked (returns HTML)
+  - Headed browser fallback implemented & tested; will work over time as persistent profile builds trust
+  - Persistent profile (`browser_profiles/maxi/`) stores cookies/session — Forter session trust builds across runs
+- ❌ **Metro, Provigo:** Blocked by Forter fraud detection (headless browser detection); would need similar headed browser approach
 
-The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function.
+The system gracefully falls back to demo data when real scraping fails, ensuring the email pipeline continues to function. Maxi's headed browser approach should eventually work as the persistent profile gains trust from Forter's reputation system.
 
 ## Running the Bot
 
